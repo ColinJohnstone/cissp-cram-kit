@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
-<title>CISSP Cram Kit</title>
+<title>CISSPrep</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -39,7 +39,7 @@ b,strong{font-weight:600}
 .wrap{max-width:1040px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
 .brand{display:flex;align-items:center;gap:14px;padding-block:14px 6px;flex-wrap:wrap}
-.brand h1{font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:-.005em;margin:0;display:flex;align-items:baseline;gap:6px;line-height:1.1}
+.brand h1{font-family:var(--display);font-weight:700;font-size:21px;letter-spacing:-.005em;margin:0;display:flex;align-items:baseline;gap:0;line-height:1.1}
 .brand h1 .tagbox{color:var(--accent)}
 .brand .count{font-size:13px;color:var(--ink-3);white-space:nowrap}
 #themeBtn{margin-left:-6px}
@@ -225,6 +225,50 @@ ul.bl{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px}
 .lnk{display:flex;flex-direction:column;gap:2px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;text-decoration:none;color:var(--ink);font-size:14px;min-width:0}
 .lnk:hover{border-color:var(--accent)}
 .lnk .tag{font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:.06em}
+/* sub navigation */
+.subtabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding-block:8px}
+.subtabs::-webkit-scrollbar{display:none}
+.subtabs a{flex:0 0 auto;padding:5px 12px;border-radius:999px;font-size:13.5px;font-weight:500;color:var(--ink-2);text-decoration:none;white-space:nowrap}
+.subtabs a:hover{background:var(--surface-2);color:var(--ink)}
+.subtabs a.on{background:var(--surface-2);color:var(--ink)}
+.subtabs a .pip{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-left:6px;vertical-align:2px}
+nav.tabs{gap:26px}
+nav.tabs a{font-size:15px}
+/* setup panel */
+.setup{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface)}
+.setup-head{padding:18px 22px 4px}
+.setup-head h3{margin:0}
+.setup-head p{margin:4px 0 0;color:var(--ink-3);font-size:14px}
+.frows{display:flex;flex-direction:column}
+.frow{display:grid;grid-template-columns:170px minmax(0,1fr);gap:16px;padding:14px 22px;border-top:1px solid var(--line);align-items:start}
+.frows .frow:first-child{border-top:0}
+.flabel{font-size:14px;font-weight:600;padding-top:7px}
+.flabel span{display:block;font-weight:400;font-size:12.5px;color:var(--ink-3);margin-top:2px}
+.fctl{min-width:0}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{font:inherit;font-size:14px;padding:7px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--bg);color:var(--ink-2);cursor:pointer}
+.seg button:hover:not(:disabled){color:var(--ink);border-color:var(--ink-3)}
+.seg button.on{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.seg button:disabled{opacity:.4;cursor:default}
+.seg button .w{font-size:11px;opacity:.6;margin-left:6px}
+.dpick{display:flex;flex-wrap:wrap;gap:6px}
+.setup-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:14px 22px;border-top:1px solid var(--line);background:var(--surface-2)}
+.setup-foot .summary{font-size:14px;color:var(--ink-2)}
+.setup-foot .btn{padding:10px 22px}
+.dmodes{display:flex;flex-direction:column;gap:14px}
+.dgname{font-size:12px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.dgcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+.dmode{font:inherit;text-align:left;display:flex;flex-direction:column;gap:2px;padding:10px 12px;border:1px solid var(--line-2);border-radius:10px;background:var(--bg);color:var(--ink);cursor:pointer}
+.dmode span{font-size:13px;color:var(--ink-3)}
+.dmode:hover{border-color:var(--ink-3)}
+.dmode.on{border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+.hist{display:flex;flex-direction:column;gap:6px}
+.hist>div{display:grid;grid-template-columns:110px minmax(60px,1fr) 44px 56px;gap:12px;align-items:center}
+/* session */
+.session{display:flex;flex-direction:column;gap:18px}
+.sbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.sback{font:inherit;font-size:14px;font-weight:500;background:transparent;border:0;color:var(--accent);cursor:pointer;padding:4px 0}
+.stitle{font-family:var(--display);font-weight:700;font-size:18px}
 .setupbtn{font:inherit;font-size:13px;color:var(--ink-2);background:transparent;border:1px solid var(--line);border-radius:999px;padding:3px 10px;cursor:pointer;white-space:nowrap}
 .setupbtn:hover{color:var(--ink);border-color:var(--line-2)}
 .ob{position:fixed;inset:0;z-index:50;background:color-mix(in srgb,var(--bg) 70%,transparent);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:grid;place-items:center;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));overflow:auto}
@@ -257,6 +301,12 @@ ul.bl{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px}
   nav.tabs{gap:18px}
   .mrow{grid-template-columns:1fr;gap:6px}
   .mgrid{grid-template-columns:1fr}
+  .frow{grid-template-columns:1fr;gap:8px;padding:14px 16px}
+  .flabel{padding-top:0}
+  .setup-head,.setup-foot{padding-inline:16px}
+  nav.tabs{gap:20px}
+  .hist>div{grid-template-columns:90px minmax(40px,1fr) 40px}
+  .hist>div>span:last-child{display:none}
 }
 </style>
 
@@ -265,24 +315,18 @@ ul.bl{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px}
 <header class="top">
   <div class="wrap">
     <div class="brand">
-      <h1><span class="tagbox">CISSP</span>Cram Kit</h1>
+      <h1><span class="tagbox">CISSP</span><span class="brand2">rep</span></h1>
       <span class="count" id="countdown"></span><button class="setupbtn" id="setupBtn">Edit setup</button><button class="setupbtn" id="themeBtn" aria-haspopup="true">Theme</button>
       <span class="spacer"></span>
       <div class="search"><input id="gsearch" type="search" placeholder="Look up anything: OCSP, Biba, HIPAA, 800-88…" aria-label="Search everything"></div>
     </div>
-    <nav class="tabs" id="tabs">
-      <a href="#plan" data-v="plan">Plan</a>
-      <a href="#cheat" data-v="cheat">Cheat Sheet</a>
-      <a href="#acronyms" data-v="acronyms">Acronyms<span class="pip">focus</span></a>
-      <a href="#regs" data-v="regs">Laws &amp; Bodies<span class="pip">focus</span></a>
-      <a href="#models" data-v="models">Models &amp; Mnemonics</a>
-      <a href="#drill" data-v="drill">Drills</a>
-      <a href="#quiz" data-v="quiz">Domain Quiz</a>
-      <a href="#exam" data-v="exam">Practice Test</a>
-      <a href="#cards" data-v="cards">Flashcards</a>
-      <a href="#dump" data-v="dump">Brain Dump</a>
-      <a href="#examday" data-v="examday">Exam Day</a>
+    <nav class="tabs" id="tabs" aria-label="Sections">
+      <a href="#plan" data-sec="plan">Plan</a>
+      <a href="#cheat" data-sec="learn">Learn</a>
+      <a href="#quiz" data-sec="practice">Practice</a>
+      <a href="#examday" data-sec="examday">Exam Day</a>
     </nav>
+    <nav class="subtabs" id="subtabs" aria-label="Pages" hidden></nav>
   </div>
 </header>
 <main class="wrap" id="app"></main>
@@ -1815,8 +1859,8 @@ function diagramSVG(it){
 }
 function typeLabel(it){return it.type==="multi"?"Multi-select":it.type==="order"?"Put in order":it.type==="match"?"Matching":it.type==="hot"?"Hotspot":"";}
 function runQuiz(host,items,cfg){
-  let i=0,right=0;const log=[];let timerId=null;const exam=cfg.exam;
-  const end=exam?Date.now()+cfg.minutes*60000:0;
+  let i=0,right=0;const log=[];let timerId=null;const exam=cfg.exam;const timed=cfg.minutes>0;
+  const end=timed?Date.now()+cfg.minutes*60000:0;
   const order=items.map(it=>{const t=it.type||"single";const o={...it,type:t};
     if(t==="single"||t==="multi")o.shuffled=shuffle(it.opts);
     if(t==="order"){let s=shuffle(it.items);let g=0;while(s.join("|")===it.items.join("|")&&g++<10)s=shuffle(it.items);o.cur=s;}
@@ -1834,13 +1878,13 @@ function runQuiz(host,items,cfg){
     const needSubmit=exam||it.type!=="single";
     host.innerHTML=`<div class="qcard">
       <div class="progress"><i style="width:${100*i/order.length}%"></i></div>
-      <div class="qmeta"><span>Question ${i+1} of ${order.length}${it.d?` · Domain ${it.d}: ${esc(DNAME[it.d])}`:""}${it.tag?` · ${esc(it.tag)}`:""}${typeLabel(it)?` · <b class="qtype">${typeLabel(it)}</b>`:""}</span>${exam?`<span class="timer" id="timer"></span>`:`<span class="tnum">${right} correct</span>`}</div>
+      <div class="qmeta"><span>Question ${i+1} of ${order.length}${it.d?` · Domain ${it.d}: ${esc(DNAME[it.d])}`:""}${it.tag?` · ${esc(it.tag)}`:""}${typeLabel(it)?` · <b class="qtype">${typeLabel(it)}</b>`:""}</span>${timed?`<span class="timer" id="timer"></span>`:""}${!exam?`<span class="tnum">${right} correct</span>`:""}</div>
       <p class="qtext">${esc(it.q)}</p>
       ${body(it)}
       <div id="fb"></div>
       <div class="row" id="ctl" style="margin-top:14px">${needSubmit?`<button class="btn" id="submit" ${it.type==="order"?"":"disabled"}>Submit answer</button>`:""}${exam?`<span class="muted" style="font-size:13px">Forward-only, like the real CAT.</span>`:""}<span style="flex:1"></span><button class="btn ghost" id="quit">End ${exam?"test":"quiz"}</button></div>
     </div>`;
-    if(exam)tick();
+    if(timed)tick();
     const sub=$("#submit",host);
     if(it.type==="single"){
       $$(".opt",host).forEach(b=>b.onclick=()=>{const k=+b.dataset.k;
@@ -1909,25 +1953,26 @@ function runQuiz(host,items,cfg){
     clearInterval(timerId);
     const n=log.length;const pct=n?Math.round(100*right/n):0;
     const byDom={};log.forEach(l=>{const d=l.it.d||0;byDom[d]=byDom[d]||[0,0];byDom[d][l.ok?0:1]++;});
-    if(exam&&n){S.exams.unshift({t:Date.now(),n,right,pct,total:order.length});S.exams=S.exams.slice(0,12);save();}
+    if((exam||cfg.record)&&n){S.exams.unshift({t:Date.now(),n,right,pct,total:order.length});S.exams=S.exams.slice(0,12);save();}
     const misses=log.filter(l=>!l.ok);
     host.innerHTML=`<div class="stack">
       <div class="card"><div class="row" style="align-items:flex-end;gap:18px">
         <div><h4>${timeout?"Time's up":"Result"}</h4><div class="score">${pct}%</div></div>
         <div><div class="tnum">${right} of ${n} correct${n<order.length?` · ${order.length-n} unanswered`:""}</div>
-        ${exam?`<span class="verdict ${pct>=75?"pass":"fail"}">${pct>=75?"Exam-ready range":"Keep drilling"}</span>`:""}</div>
+        ${(exam||cfg.record)?`<span class="verdict ${pct>=75?"pass":"fail"}">${pct>=75?"Exam-ready range":"Keep drilling"}</span>`:""}</div>
       </div>
       ${Object.keys(byDom).some(k=>+k)?`<div class="mast" style="margin-top:16px">${Object.keys(byDom).filter(k=>+k).sort().map(d=>{const[r,w]=byDom[d];const p=Math.round(100*r/(r+w));return `<span class="dnum">${d}</span><div class="bar ${barClass(p)}"><i style="width:${p}%"></i></div><span class="tnum">${r}/${r+w}</span>`;}).join("")}</div>`:""}
-      ${exam?`<p class="muted" style="font-size:13px;margin:12px 0 0">Practice benchmark: aim for 75%+ on these to feel safe. The real exam is scaled (700/1000) and adaptive, so this isn't a direct conversion.</p>`:""}
-      <div class="row" style="margin-top:16px"><button class="btn" id="again">Go again</button>${misses.length?`<button class="btn ghost" id="redo">Retry the ${misses.length} I missed</button>`:""}</div></div>
+      ${(exam||cfg.record)?`<p class="muted" style="font-size:13px;margin:12px 0 0">Practice benchmark: aim for 75%+ on these to feel safe. The real exam is scaled (700/1000) and adaptive, so this isn't a direct conversion.</p>`:""}
+      <div class="row" style="margin-top:16px"><button class="btn" id="again">Go again</button>${misses.length?`<button class="btn ghost" id="redo">Retry the ${misses.length} I missed</button>`:""}${cfg.back?`<button class="btn ghost" id="toSetup">${esc(cfg.backLabel||"Back to setup")}</button>`:""}</div></div>
       ${misses.length?`<div class="card"><h3>Review what you missed</h3><ol class="review">${misses.map(l=>`<li><b>${esc(l.it.q)}</b><br><span style="color:var(--bad)">Your answer: ${esc(l.given)}</span><br><span style="color:var(--good)">Correct: ${esc(ansText(l.it))}</span><br><span class="muted">${esc(l.it.ex||"")}</span></li>`).join("")}</ol></div>`:""}
     </div>`;
     $("#again",host).onclick=()=>cfg.again();
-    const rd=$("#redo",host);if(rd)rd.onclick=()=>runQuiz(host,misses.map(l=>l.it),{...cfg,exam:false});
+    const ts=$("#toSetup",host);if(ts)ts.onclick=()=>{cfg.back();window.scrollTo({top:0});};
+    const rd=$("#redo",host);if(rd)rd.onclick=()=>{stopActive=runQuiz(host,misses.map(l=>l.it),{...cfg,exam:false,minutes:0,record:false});};
     if(cfg.scrollTop!==false)window.scrollTo({top:0});
   }
   draw();
-  if(exam)timerId=setInterval(tick,1000);
+  if(timed)timerId=setInterval(tick,1000);
   return ()=>clearInterval(timerId);
 }
 let stopActive=null;
@@ -2003,8 +2048,8 @@ function openSetup(first){
   const minDate=(()=>{const t=today0();return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,"0")}-${String(t.getDate()).padStart(2,"0")}`;})();
   function draw(){
     const steps=[
-     ()=>`<p class="obstep">Step 1 of 3</p><h2 id="obTitle">${first?"Welcome to the CISSP Cram Kit":"Your setup"}</h2>
-       <p class="lede" style="margin-bottom:18px">A cheat sheet, acronym and regulator drills, quizzes and timed practice tests for the CISSP. Three quick questions and it builds a study plan around your exam date.</p>
+     ()=>`<p class="obstep">Step 1 of 3</p><h2 id="obTitle">${first?"Welcome to CISSPrep":"Your setup"}</h2>
+       <p class="lede" style="margin-bottom:18px">Your CISSP study guide: cheat sheets, acronym and regulator drills, quizzes and timed practice tests. Three quick questions and it builds a study plan around your exam date.</p>
        <label class="field" for="obName"><span>What should we call you?</span><input id="obName" type="text" autocomplete="given-name" maxlength="40" placeholder="First name (optional)" value="${esc(draft.name)}"></label>
        <div class="field" style="margin-top:18px"><span>Pick a look</span>${swatchHTML(S.skin||"system")}</div>`,
      ()=>`<p class="obstep">Step 2 of 3</p><h2 id="obTitle">When is your exam?</h2>
@@ -2032,7 +2077,7 @@ function openSetup(first){
   }
   function finish(skipped){
     S.profile={name:draft.name,date:draft.date,focus:[...draft.focus].sort((a,b)=>a-b),topics:[...draft.topics],done:true};
-    if(S.profile.focus.length)quizD=S.profile.focus[0];
+    if(S.profile.focus.length){S.prefs.quiz=Object.assign(S.prefs.quiz||{},{doms:S.profile.focus.slice(0,1)});}
     save();close();countdown();if(currentView==="plan")V.plan();else location.hash="#plan";
   }
   function close(){ov.remove();document.removeEventListener("keydown",esc_);if(prevFocus&&prevFocus.focus)prevFocus.focus();}
@@ -2116,7 +2161,7 @@ V.acronyms=()=>{
   draw();
   $("#acrq").oninput=e=>{acrState.q=e.target.value;draw();};
   $$(".chip[data-dom]",app).forEach(c=>c.onclick=()=>{acrState.d=+c.dataset.dom;$$(".chip[data-dom]",app).forEach(x=>x.classList.toggle("on",x===c));draw();});
-  $("#acrdrill").onclick=()=>{drillState.mode="acr";drillState.d=acrState.d;location.hash="#drill";};
+  $("#acrdrill").onclick=()=>{S.prefs.drill=Object.assign(S.prefs.drill||{},{mode:"acr",doms:acrState.d>0?[acrState.d]:[]});save();location.hash="#drill";};
 };
 function filteredAcr(){const d=acrState.d;return ACR.filter(x=>d===0||(d===-1?x.d===0:x.d===d));}
 
@@ -2144,7 +2189,7 @@ V.regs=()=>{
   };
   draw();
   $("#regq").oninput=e=>{regQ=e.target.value;draw();};
-  $("#regdrill").onclick=()=>{drillState.mode="body";location.hash="#drill";};
+  $("#regdrill").onclick=()=>{S.prefs.drill=Object.assign(S.prefs.drill||{},{mode:"mix"});save();location.hash="#drill";};
 };
 
 /* ---------- generated calculation + "which key?" drills ---------- */
@@ -2191,7 +2236,7 @@ function keyItem(){
 }
 
 /* ---------- drills (generated) ---------- */
-let drillState={mode:"acr",d:0,n:15};
+let drillState={mode:null};
 const MODES=[
  ["acr","Acronym → meaning"],["rev","Meaning → acronym"],["calc","Calculations"],["keys","Which key?"],["body","Body → what it does"],["law","Description → law"],["std","Standard → topic"],["stdrev","Topic → standard"],["mix","Mixed regulatory"]
 ];
@@ -2239,7 +2284,7 @@ function distract(item,pool,key,n=3){ // prefer same region / family
 }
 function buildDrill(mode,d,n){
   const items=[];
-  const acrPool=ACR.filter(x=>d===0||(d===-1?x.d===0:x.d===d));
+  const acrPool=ACR.filter(x=>!d||!d.length||d.includes(x.d));
   if(mode==="acr")sample(acrPool,n).forEach(x=>{const ans=mainPart(x.f);let f=fakeExpansions(x,3);
     if(f.length<3)f=f.concat(shuffle(ACR.filter(y=>y.a!==x.a&&y.a[0]===x.a[0])).map(y=>mainPart(y.f))).filter((v,i,a)=>a.indexOf(v)===i&&v!==ans).slice(0,3);
     items.push({d:x.d,q:`What does ${x.a} stand for?`,ans,opts:[ans,...f.slice(0,3)],ex:`${x.a} = ${x.f}.${x.n?" "+x.n:""}`,tag:"Acronym"});});
@@ -2258,84 +2303,117 @@ function buildDrill(mode,d,n){
   if(mode==="keys")for(let i=0;i<n;i++)items.push(keyItem());
   return (mode==="calc"?shuffle(items):items).filter(x=>x.opts.length===4);
 }
+/* ---------- setup panel + session components ---------- */
+S.prefs=S.prefs||{};
+const pref=(k,def)=>{S.prefs[k]=Object.assign({},def,S.prefs[k]||{});return S.prefs[k];};
+function fRow(label,inner,opts={}){return `<div class="frow" ${opts.id?`id="${opts.id}"`:""} ${opts.hidden?"hidden":""}><div class="flabel">${label}${opts.hint?`<span>${opts.hint}</span>`:""}</div><div class="fctl">${inner}</div></div>`;}
+function segHTML(name,opts,val){return `<div class="seg" role="radiogroup" data-seg="${name}">${opts.map(o=>`<button role="radio" aria-checked="${String(o[0])===String(val)}" class="${String(o[0])===String(val)?"on":""}" data-v="${o[0]}" ${o[3]?"disabled":""}>${esc(o[1])}${o[2]!=null?`<span class="w">${o[2]}</span>`:""}</button>`).join("")}</div>`;}
+function bindSeg(root,name,cb){const bs=$$(`[data-seg="${name}"] button`,root);bs.forEach(b=>b.onclick=()=>{if(b.disabled)return;bs.forEach(x=>{x.classList.toggle("on",x===b);x.setAttribute("aria-checked",x===b);});cb(b.dataset.v);});}
+function domPickHTML(name,sel){return `<div class="dpick" data-dpick="${name}"><button class="chip ${!sel.length?"on":""}" data-all="1">All</button>${DOMAINS.map(d=>`<button class="chip ${sel.includes(d.id)?"on":""}" data-d="${d.id}" title="${esc(d.name)}">D${d.id} ${d.code}</button>`).join("")}</div>`;}
+function bindDom(root,name,arr,cb){const w=$(`[data-dpick="${name}"]`,root);if(!w)return;
+  const draw=()=>{$$("[data-d]",w).forEach(b=>b.classList.toggle("on",arr.includes(+b.dataset.d)));$("[data-all]",w).classList.toggle("on",!arr.length);};
+  $("[data-all]",w).onclick=()=>{arr.length=0;draw();cb();};
+  $$("[data-d]",w).forEach(b=>b.onclick=()=>{const id=+b.dataset.d,i=arr.indexOf(id);i>=0?arr.splice(i,1):arr.push(id);if(arr.length===DOMAINS.length)arr.length=0;arr.sort((a,b)=>a-b);draw();cb();});}
+const domSummary=a=>!a.length?"all domains":a.map(x=>"D"+x).join(", ");
+function panelHTML(title,desc,rows,startLabel){return `<section class="setup"><div class="setup-head"><h3>${title}</h3>${desc?`<p>${desc}</p>`:""}</div><div class="frows">${rows.join("")}</div><div class="setup-foot"><span class="summary" id="sum"></span><button class="btn" id="go">${startLabel}</button></div></section>`;}
+function session(title,back,run){
+  if(stopActive){stopActive();stopActive=null;}
+  app.innerHTML=`<div class="session"><div class="sbar"><button class="sback" id="sback">← ${esc(back.label)}</button><span class="stitle">${esc(title)}</span></div><div id="shost"></div></div>`;
+  $("#sback").onclick=()=>{if(stopActive){stopActive();stopActive=null;}back.go();window.scrollTo({top:0});};
+  window.scrollTo({top:0});const st=run($("#shost"));if(typeof st==="function")stopActive=st;
+}
+
+/* ---------- drills view ---------- */
+const DRILL_GROUPS=[
+ ["Acronyms",[["acr","Acronym → meaning","Every option spells the same letters."],["rev","Meaning → acronym","Spot the real one among look-alikes."]]],
+ ["Crypto & math",[["calc","Calculations","ALE, safeguard value, RTO, availability, key counts, backups."],["keys","Which key?","Encrypt, sign, verify, hybrid, certificates, HMAC."]]],
+ ["Laws & standards",[["body","Regulatory bodies","Who does what, with the name hidden."],["law","Laws & regulations","Match the description to the law."],["stdrev","Topic → standard","Which NIST SP, ISO or FIPS covers it?"],["std","Standard → topic","What does this standard cover?"],["mix","Mixed regulatory","Bodies, laws, standards and enforcers."]]],
+];
+const DRILL_NAMES=Object.fromEntries(DRILL_GROUPS.flatMap(g=>g[1]).map(m=>[m[0],m[1]]));
 V.drill=()=>{
-  app.innerHTML=`<div class="stack">
-   <div><h2>Drills</h2><p class="lede">Fast multiple-choice rounds generated from the acronym and regulator tables. Distractors come from the same domain, so they get harder than they look.</p>
-   <div class="chips" id="modes">${MODES.map(m=>`<button class="chip ${drillState.mode===m[0]?"on":""}" data-m="${m[0]}">${m[1]}</button>`).join("")}</div>
-   <div id="ddom" style="margin-top:10px"></div>
-   <div class="row" style="margin-top:12px"><span class="muted" style="font-size:14px">Questions per round</span>${[10,15,25,40].map(k=>`<button class="chip ${drillState.n===k?"on":""}" data-n="${k}">${k}</button>`).join("")}<span style="flex:1"></span><button class="btn" id="dstart">Start round</button></div></div>
-   <div id="dhost"></div></div>`;
-  const drawDom=()=>{const show=drillState.mode==="acr"||drillState.mode==="rev";$("#ddom").innerHTML=show?domChips(drillState.d,{extra:`<button class="chip ${drillState.d===-1?"on":""}" data-dom="-1">AI &amp; cross-domain</button>`}):"";
-    $$("#ddom .chip").forEach(c=>c.onclick=()=>{drillState.d=+c.dataset.dom;drawDom();});};
-  drawDom();
-  $$("#modes .chip").forEach(c=>c.onclick=()=>{drillState.mode=c.dataset.m;$$("#modes .chip").forEach(x=>x.classList.toggle("on",x===c));drawDom();});
-  $$("[data-n]",app).forEach(c=>c.onclick=()=>{drillState.n=+c.dataset.n;$$("[data-n]",app).forEach(x=>x.classList.toggle("on",x===c));});
-  const start=()=>{const items=buildDrill(drillState.mode,drillState.d,drillState.n);const h=$("#dhost");if(!items.length){h.innerHTML=`<div class="empty">No items for that filter.</div>`;return;}runQuiz(h,items,{again:start});h.scrollIntoView({behavior:"smooth",block:"start"});};
-  $("#dstart").onclick=start;
+  const p=pref("drill",{mode:"acr",doms:[],len:15});if(drillState.mode&&drillState.mode!==p.mode&&DRILL_NAMES[drillState.mode]){p.mode=drillState.mode;}drillState.mode=null;
+  const acrMode=()=>p.mode==="acr"||p.mode==="rev";
+  app.innerHTML=`<div class="stack"><div><h2>Drills</h2><p class="lede">Fast rounds generated fresh every time. Pick a drill, set the options, start.</p></div>
+   ${panelHTML("Set up a drill","",[
+     fRow("Drill",`<div class="dmodes">${DRILL_GROUPS.map(g=>`<div class="dgroup"><div class="dgname">${g[0]}</div><div class="dgcards">${g[1].map(m=>`<button class="dmode ${p.mode===m[0]?"on":""}" data-mode="${m[0]}" role="radio" aria-checked="${p.mode===m[0]}"><b>${esc(m[1])}</b><span>${esc(m[2])}</span></button>`).join("")}</div></div>`).join("")}</div>`),
+     fRow("Domains",domPickHTML("dd",p.doms),{id:"ddRow",hidden:!acrMode(),hint:"Acronym drills only"}),
+     fRow("Length",segHTML("dlen",[[10,"10"],[15,"15"],[25,"25"],[40,"40"]],p.len)),
+   ],"Start drill")}</div>`;
+  const upd=()=>{$("#ddRow").hidden=!acrMode();$("#sum").textContent=`${p.len} questions · ${DRILL_NAMES[p.mode]}${acrMode()?` · ${domSummary(p.doms)}`:""}`;save();};
+  $$(".dmode",app).forEach(b=>b.onclick=()=>{p.mode=b.dataset.mode;$$(".dmode",app).forEach(x=>{x.classList.toggle("on",x===b);x.setAttribute("aria-checked",x===b);});upd();});
+  bindDom(app,"dd",p.doms,upd);bindSeg(app,"dlen",v=>{p.len=+v;upd();});upd();
+  const start=()=>{const items=buildDrill(p.mode,acrMode()?p.doms:[],p.len);
+    session(`Drill · ${DRILL_NAMES[p.mode]}`,{label:"Drill setup",go:V.drill},h=>{if(!items.length){h.innerHTML=`<div class="empty">No items match. Try All domains.</div>`;return;}return runQuiz(h,items,{again:start,back:V.drill,backLabel:"Drill setup"});});};
+  $("#go").onclick=start;
 };
 
-/* ---------- domain quiz ---------- */
-let quizD=1,quizT="all";
+/* ---------- quiz view ---------- */
 const QTYPES=[["all","All types"],["best","BEST / FIRST"],["single","Multiple choice"],["multi","Multi-select"],["dnd","Order, match & hotspot"]];
 const typeOK=(q,t)=>t==="all"||(t==="dnd"?(q.type==="order"||q.type==="match"||q.type==="hot"):t==="best"?!!q.best:q.type===t);
-V.quiz=()=>{
-  const missN=QS.filter(q=>stat(q.id)[1]>stat(q.id)[0]).length;
-  const cnt=t=>QS.filter(q=>typeOK(q,t)).length;
-  app.innerHTML=`<div class="stack">
-   <div><h2>Domain Quiz</h2><p class="lede">${QS.length} items: scenario multiple choice, BEST/FIRST manager-mindset questions (every option is plausible; the explanation says why the runner-up loses), multi-select, and drag-and-drop style ordering and matching.</p>
-   <div class="smart"><div><b>Smart review</b><div class="muted" style="font-size:14px">10 questions picked from what you've missed, your weakest domains, your focus areas and what you haven't seen yet.</div></div><button class="btn" id="smartGo">Start smart review</button></div>
-   ${domChips(quizD,{extra:`<button class="chip ${quizD===-1?"on":""}" data-dom="-1">My misses (${missN})</button>`})}
-   <div class="chips" id="qtypes" style="margin-top:10px">${QTYPES.map(t=>`<button class="chip ${quizT===t[0]?"on":""}" data-t="${t[0]}">${t[1]} <span class="w">${cnt(t[0])}</span></button>`).join("")}</div>
-   <div class="row" style="margin-top:12px"><button class="btn" id="qstart">Start 10 questions</button><span class="muted" style="font-size:13px" id="qinfo"></span></div></div>
-   <div id="qhost"></div></div>`;
-  const info=()=>{const pool=quizPool();$("#qinfo").textContent=`${pool.length} available`;};
-  info();
-  $$(".chip[data-dom]",app).forEach(c=>c.onclick=()=>{quizD=+c.dataset.dom;$$(".chip[data-dom]",app).forEach(x=>x.classList.toggle("on",x===c));info();});
-  $$("#qtypes .chip").forEach(c=>c.onclick=()=>{quizT=c.dataset.t;$$("#qtypes .chip").forEach(x=>x.classList.toggle("on",x===c));info();});
-  const start=()=>{const pool=quizPool();const h=$("#qhost");if(!pool.length){h.innerHTML=`<div class="empty">Nothing matches that filter yet.</div>`;return;}runQuiz(h,sample(pool,10),{again:start});h.scrollIntoView({behavior:"smooth",block:"start"});};
-  $("#qstart").onclick=start;
-  const smart=()=>{const h=$("#qhost");runQuiz(h,smartPick(10),{again:smart});h.scrollIntoView({behavior:"smooth",block:"start"});};
-  $("#smartGo").onclick=smart;
-  if(pendingSmart){pendingSmart=false;smart();}
-};
 let pendingSmart=false;
-function smartPick(n){
-  // priority: net misses > weak domain > focus domain > unseen; small random jitter
-  const focus=new Set(prof().focus||[]);const dm={};DOMAINS.forEach(d=>dm[d.id]=domainMastery(d.id).pct);
-  const scored=QS.map(q=>{const [r,w]=stat(q.id);const pct=dm[q.d];
-    let sc=(w-r)*3+(r+w===0?1.2:0)+(pct==null?0.8:(100-pct)/25)+(focus.has(q.d)?1.5:0)+(r>=2&&w===0?-4:0)+Math.random()*1.5;return {q,sc};});
-  scored.sort((a,b)=>b.sc-a.sc);
-  // keep it varied: max 3 per domain
-  const out=[],per={};for(const {q} of scored){if((per[q.d]||0)>=3)continue;out.push(q);per[q.d]=(per[q.d]||0)+1;if(out.length===n)break;}
-  return out;
+function quizPool(p){
+  let pool=p.mode==="misses"?QS.filter(q=>stat(q.id)[1]>stat(q.id)[0]):QS;
+  if(p.doms.length)pool=pool.filter(q=>p.doms.includes(q.d));
+  if(p.type!=="all")pool=pool.filter(q=>typeOK(q,p.type));
+  return pool;
 }
-function quizPool(){
-  let p=quizD===-1?QS.filter(q=>stat(q.id)[1]>stat(q.id)[0]):quizD===0?QS:QS.filter(q=>q.d===quizD);
-  if(quizT!=="all")p=p.filter(q=>typeOK(q,quizT));
-  return p;
-}
-
-/* ---------- practice test ---------- */
-const LENGTHS=[[25,30,"Sprint"],[50,60,"Half"],[100,120,"Minimum length"],[150,180,"Maximum length"]];
-V.exam=()=>{
-  app.innerHTML=`<div class="stack">
-   <div><h2>Practice Test</h2><p class="lede">Timed, mixed-domain and weighted to the official domain percentages. Forward-only with no feedback until the end, like the CAT. About 1 in 5 items are multi-select, ordering or matching. The real exam gives about 72 seconds per question at 150 items, so these use the same pace.</p>
-   <div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">${LENGTHS.map(l=>`<div class="card"><h4>${l[2]}</h4><div class="score" style="font-size:34px">${l[0]}</div><p class="muted" style="margin:4px 0 12px">questions · ${l[1]} minutes</p><button class="btn" data-len="${l[0]}" data-min="${l[1]}">Start</button></div>`).join("")}</div></div>
-   <div id="ehost"></div></div>`;
-  $$("[data-len]",app).forEach(b=>b.onclick=()=>{
-    const n=+b.dataset.len,min=+b.dataset.min;
-    const start=()=>{const items=weighted(n);const h=$("#ehost");app.querySelector(".stack").firstElementChild.hidden=true;stopActive=runQuiz(h,items,{exam:true,minutes:min,again:()=>{V.exam();}});window.scrollTo({top:0});};
-    start();
-  });
+V.quiz=()=>{
+  const p=pref("quiz",{mode:"custom",doms:(prof().focus||[]).slice(0,1),type:"all",len:10});
+  const missN=QS.filter(q=>stat(q.id)[1]>stat(q.id)[0]).length;
+  const cnt=t=>QS.filter(q=>typeOK(q,t)&&(!p.doms.length||p.doms.includes(q.d))).length;
+  app.innerHTML=`<div class="stack"><div><h2>Quiz</h2><p class="lede">${QS.length} questions: scenarios, BEST/FIRST manager-mindset items, multi-select, ordering, matching and hotspot. You get an explanation after every answer.</p></div>
+   ${panelHTML("Set up a quiz","",[
+     fRow("Mode",segHTML("qmode",[["custom","Custom"],["smart","Smart review"],["misses","My misses",missN,!missN]],p.mode),{hint:"Smart review picks from your misses, weak and focus domains"}),
+     fRow("Domains",domPickHTML("qd",p.doms),{id:"qdRow"}),
+     fRow("Question types",`<div id="qtypes">${segHTML("qtype",QTYPES.map(t=>[t[0],t[1],cnt(t[0])]),p.type)}</div>`,{id:"qtRow"}),
+     fRow("Length",segHTML("qlen",[[10,"10"],[20,"20"],[30,"30"],[50,"50"]],p.len)),
+   ],"Start quiz")}</div>`;
+  const upd=()=>{if(p.mode==="misses"&&!missN)p.mode="custom";const smart=p.mode==="smart";$("#qdRow").hidden=smart;$("#qtRow").hidden=smart;
+    $("#qtypes").innerHTML=segHTML("qtype",QTYPES.map(t=>[t[0],t[1],cnt(t[0])]),p.type);bindSeg(app,"qtype",v=>{p.type=v;upd();});
+    const pool=quizPool(p);const n=Math.min(p.len,smart?QS.length:pool.length);
+    $("#sum").textContent=smart?`${p.len} questions picked for you`:pool.length?`${n} questions · ${domSummary(p.doms)} · ${pool.length} available`:"Nothing matches. Widen the domains or types.";
+    $("#go").disabled=!smart&&!pool.length;save();};
+  bindSeg(app,"qmode",v=>{p.mode=v;upd();});bindDom(app,"qd",p.doms,upd);bindSeg(app,"qlen",v=>{p.len=+v;upd();});upd();
+  const start=()=>{const smart=p.mode==="smart";const items=smart?smartPick(p.len):sample(quizPool(p),p.len);
+    session(smart?"Smart review":p.mode==="misses"?"My misses":`Quiz · ${domSummary(p.doms)}`,{label:"Quiz setup",go:V.quiz},h=>runQuiz(h,items,{again:start,back:V.quiz,backLabel:"Quiz setup"}));};
+  $("#go").onclick=start;
+  if(pendingSmart){pendingSmart=false;p.mode="smart";start();}
 };
-function weighted(n){ // ~80% multiple choice, ~20% multi-select / order / match per domain
+
+/* ---------- practice test view ---------- */
+const LENGTHS=[[25,30],[50,60],[100,120],[150,180]];
+V.exam=()=>{
+  const p=pref("exam",{len:50,feedback:"end",timer:"on"});
+  const ex=S.exams.slice(0,6);
+  app.innerHTML=`<div class="stack"><div><h2>Practice Test</h2><p class="lede">Mixed domains, weighted like the real exam, with about 1 in 5 items multi-select, ordering, matching or hotspot. Timed at the real exam's pace of about 72 seconds per question.</p></div>
+   ${panelHTML("Set up a practice test","",[
+     fRow("Length",segHTML("elen",LENGTHS.map(l=>[l[0],`${l[0]} questions`]),p.len),{hint:"Real exam: 100–150"}),
+     fRow("Answers",segHTML("efb",[["end","At the end (exam mode)"],["each","After each question (study mode)"]],p.feedback)),
+     fRow("Timer",segHTML("etimer",[["on","On"],["off","Off"]],p.timer)),
+   ],"Start test")}
+   ${ex.length?`<div class="card"><h3>Recent tests</h3><div class="hist">${ex.map(e=>`<div><span class="tnum">${new Date(e.t).toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric"})}</span><span class="bar ${barClass(e.pct)}"><i style="width:${e.pct}%"></i></span><b class="tnum" style="color:var(--ink)">${e.pct}%</b><span class="tnum">${e.right}/${e.n}</span></div>`).join("")}</div></div>`:""}</div>`;
+  const mins=()=>LENGTHS.find(l=>l[0]===p.len)[1];
+  const upd=()=>{$("#sum").textContent=`${p.len} questions${p.timer==="on"?` · ${mins()} minutes`:" · untimed"} · ${p.feedback==="end"?"forward-only, score at the end":"explanations as you go"}`;save();};
+  bindSeg(app,"elen",v=>{p.len=+v;upd();});bindSeg(app,"efb",v=>{p.feedback=v;upd();});bindSeg(app,"etimer",v=>{p.timer=v;upd();});upd();
+  const start=()=>{const items=weighted(p.len);
+    session(`Practice test · ${p.len} questions`,{label:"Test setup",go:V.exam},h=>runQuiz(h,items,{exam:p.feedback==="end",minutes:p.timer==="on"?mins():0,record:true,again:start,back:V.exam,backLabel:"Test setup"}));};
+  $("#go").onclick=start;
+};
+function weighted(n){ // ~80% multiple choice, ~20% other item types per domain
   const out=[];const byD={};QS.forEach(q=>{const g=q.type==="single"?"s":"a";((byD[q.d]=byD[q.d]||{s:[],a:[]})[g]).push(q);});
   DOMAINS.forEach(d=>{const k=Math.round(n*d.w/100);const ka=Math.min(byD[d.id].a.length,Math.max(1,Math.round(k*0.2)));out.push(...sample(byD[d.id].a,ka),...sample(byD[d.id].s,Math.min(byD[d.id].s.length,k-ka)));});
   const rest=shuffle(QS.filter(q=>!out.includes(q)));while(out.length<n&&rest.length)out.push(rest.pop());
   return shuffle(out.slice(0,n));
 }
 
-
+function smartPick(n){
+  const focus=new Set(prof().focus||[]);const dm={};DOMAINS.forEach(d=>dm[d.id]=domainMastery(d.id).pct);
+  const scored=QS.map(q=>{const [r,w]=stat(q.id);const pct=dm[q.d];
+    let sc=(w-r)*3+(r+w===0?1.2:0)+(pct==null?0.8:(100-pct)/25)+(focus.has(q.d)?1.5:0)+(r>=2&&w===0?-4:0)+Math.random()*1.5;return {q,sc};});
+  scored.sort((a,b)=>b.sc-a.sc);
+  const cap=Math.max(3,Math.ceil(n/4));const out=[],per={};for(const {q} of scored){if((per[q.d]||0)>=cap)continue;out.push(q);per[q.d]=(per[q.d]||0)+1;if(out.length===n)break;}
+  return out;
+}
 /* ---------- models & mnemonics ---------- */
 let modD=0;
 function mnHTML(mn){ // bold the first letter of each word in the mnemonic
@@ -2369,13 +2447,13 @@ function osiTable(m){
 const BOX_GAP=[0,4*36e5,864e5,3*864e5,7*864e5,14*864e5]; // due gap after reaching each box
 const MASTERED=4;
 Object.keys(S.cards).forEach(k=>{if(typeof S.cards[k]!=="object")S.cards[k]={b:2,due:Date.now()};});
-let fcState={src:"study",d:0,dueOnly:true,deck:[],i:0,flip:false};
+let fcState={src:"study",doms:[],dueOnly:true,deck:[],i:0,flip:false};
 function allCards(){
-  let cards=[];const d=fcState.d;
-  if(fcState.src==="study")REV.forEach(r=>{if(d&&r.id!==d)return;r.review.forEach(c=>cards.push({k:"s:"+r.id+":"+c.t,f:c.t,b:c.d,src:`Study set · Domain ${r.id}`}));});
-  if(fcState.src==="acr")ACR.forEach(x=>{if(d&&x.d!==d)return;cards.push({k:"a:"+x.a,f:x.a,b:x.f+(x.n?` — ${x.n}`:""),src:`Acronym · Domain ${x.d||"all"}`});});
+  let cards=[];const ds=fcState.doms||[];const no=x=>ds.length&&!ds.includes(x);
+  if(fcState.src==="study")REV.forEach(r=>{if(no(r.id))return;r.review.forEach(c=>cards.push({k:"s:"+r.id+":"+c.t,f:c.t,b:c.d,src:`Study set · Domain ${r.id}`}));});
+  if(fcState.src==="acr")ACR.forEach(x=>{if(no(x.d))return;cards.push({k:"a:"+x.a,f:x.a,b:x.f+(x.n?` — ${x.n}`:""),src:`Acronym · Domain ${x.d||"all"}`});});
   if(fcState.src==="regs"){BODIES.forEach(b=>cards.push({k:"b:"+b.n,f:b.n,b:`${b.f} (${b.r}). ${b.w}`,src:"Body"}));LAWS.forEach(b=>cards.push({k:"l:"+b.n,f:b.n,b:`${b.f} (${b.r}). ${b.w} ${b.x}`,src:"Law"}));STANDARDS.forEach(b=>cards.push({k:"t:"+b.n,f:b.n,b:b.w,src:"Standard"}));}
-  if(fcState.src==="models")MODELS.forEach(m=>{if(d&&m.d!==d)return;cards.push({k:"m:"+m.id,f:m.name,b:`${m.mn}\n\n${m.steps.map((x,i)=>(m.ord?(i+1)+". ":"• ")+x[0]).join("\n")}`,src:`Model · Domain ${m.d}`});});
+  if(fcState.src==="models")MODELS.forEach(m=>{if(no(m.d))return;cards.push({k:"m:"+m.id,f:m.name,b:`${m.mn}\n\n${m.steps.map((x,i)=>(m.ord?(i+1)+". ":"• ")+x[0]).join("\n")}`,src:`Model · Domain ${m.d}`});});
   return cards;
 }
 function cardStats(cards){const now=Date.now();let due=0,fresh=0,learning=0,mastered=0;
@@ -2389,28 +2467,32 @@ function buildDeck(){
   }else cards=shuffle(cards);
   fcState.deck=cards;fcState.i=0;fcState.flip=false;
 }
+const DECKS=()=>[["study","Study set",REV.reduce((a,r)=>a+r.review.length,0)],["acr","Acronyms",ACR.length],["regs","Laws & bodies",BODIES.length+LAWS.length+STANDARDS.length],["models","Models",MODELS.length]];
+let fcHost=null;
 V.cards=()=>{
-  buildDeck();const st=cardStats(allCards());
-  app.innerHTML=`<div class="stack">
-   <div><h2>Flashcards</h2><p class="lede">Spaced repetition: <b>Got it</b> pushes a card further out (4 hours, then 1, 3, 7 and 14 days); <b>Again</b> brings it straight back. Cards you keep missing come up first. Keys: space flips, 1 again, 2 got it, → skip.</p>
-   <div class="chips" id="fsrc">${[["study",`Study set (${REV.reduce((a,r)=>a+r.review.length,0)})`],["acr",`Acronyms (${ACR.length})`],["regs",`Laws & bodies (${BODIES.length+LAWS.length+STANDARDS.length})`],["models",`Models & mnemonics (${MODELS.length})`]].map(s=>`<button class="chip ${fcState.src===s[0]?"on":""}" data-s="${s[0]}">${esc(s[1])}</button>`).join("")}</div>
-   <div id="fdom" style="margin-top:10px">${fcState.src==="regs"?"":domChips(fcState.d)}</div>
-   <div class="srsbar"><span><b>${st.due}</b> due</span><span><b>${st.fresh}</b> new</span><span><b>${st.learning}</b> learning</span><span><b>${st.mastered}</b> mastered</span></div>
-   <div class="row" style="margin-top:6px;font-size:14px"><label class="row" style="gap:6px"><input type="checkbox" id="dueonly" ${fcState.dueOnly?"checked":""}> Only due and new cards</label>${Object.keys(S.cards).length?`<button class="chip" id="resetk">Reset card history</button>`:""}</div></div>
-   <div id="fhost"></div></div>`;
-  $$("#fsrc .chip").forEach(c=>c.onclick=()=>{fcState.src=c.dataset.s;fcState.d=0;V.cards();});
-  $$("#fdom .chip").forEach(c=>c.onclick=()=>{fcState.d=+c.dataset.dom;V.cards();});
-  $("#dueonly").onchange=e=>{fcState.dueOnly=e.target.checked;V.cards();};
-  const rk=$("#resetk");if(rk)rk.onclick=()=>{rk.outerHTML=`<span>Clear all card history?</span><button class="chip" id="rky">Yes</button><button class="chip" id="rkn">No</button>`;$("#rky").onclick=()=>{S.cards={};save();V.cards();};$("#rkn").onclick=()=>V.cards();};
-  drawCard();
+  const p=pref("cards",{src:"study",doms:[],show:"due"});fcState.src=p.src;fcState.doms=p.doms;fcState.dueOnly=p.show==="due";
+  app.innerHTML=`<div class="stack"><div><h2>Flashcards</h2><p class="lede">Spaced repetition: <b>Got it</b> pushes a card further out (4 hours, then 1, 3, 7 and 14 days); <b>Again</b> brings it straight back. Keys: space flips, 1 again, 2 got it, → skip.</p></div>
+   ${panelHTML("Set up a review","",[
+     fRow("Deck",segHTML("cdeck",DECKS().map(d=>[d[0],d[1],d[2]]),p.src)),
+     fRow("Domains",domPickHTML("cd",p.doms),{id:"cdRow"}),
+     fRow("Cards",segHTML("cshow",[["due","Due and new"],["all","All cards"]],p.show)),
+     fRow("Progress",`<div class="srsbar" id="srs"></div>`),
+   ],"Start review")}
+   ${Object.keys(S.cards).length?`<div class="row" id="rkRow"><button class="chip" id="resetk">Reset card history</button></div>`:""}</div>`;
+  const upd=()=>{fcState.src=p.src;fcState.doms=p.src==="regs"?[]:p.doms;fcState.dueOnly=p.show==="due";$("#cdRow").hidden=p.src==="regs";
+    const all=allCards(),st=cardStats(all);$("#srs").innerHTML=`<span><b>${st.due}</b> due</span><span><b>${st.fresh}</b> new</span><span><b>${st.learning}</b> learning</span><span><b>${st.mastered}</b> mastered</span>`;
+    buildDeck();$("#sum").textContent=fcState.deck.length?`${fcState.deck.length} cards ready`:"Nothing due in this deck right now";save();};
+  bindSeg(app,"cdeck",v=>{p.src=v;upd();});bindDom(app,"cd",p.doms,upd);bindSeg(app,"cshow",v=>{p.show=v;upd();});upd();
+  const rk=$("#resetk");if(rk)rk.onclick=()=>{$("#rkRow").innerHTML=`<span style="font-size:14px">Clear all card history?</span><button class="chip" id="rky">Yes, clear it</button><button class="chip" id="rkn">Keep it</button>`;$("#rky").onclick=()=>{S.cards={};save();V.cards();};$("#rkn").onclick=()=>V.cards();};
+  $("#go").onclick=()=>{buildDeck();session(`Flashcards · ${DECKS().find(d=>d[0]===p.src)[1]}`,{label:"Flashcard setup",go:V.cards},h=>{fcHost=h;drawCard();});};
 };
 function nextDue(){const ks=allCards().map(c=>S.cards[c.k]).filter(Boolean).map(r=>r.due).filter(t=>t>Date.now());return ks.length?Math.min(...ks):null;}
 function drawCard(){
-  const h=$("#fhost");if(!h)return;const deck=fcState.deck;
+  const h=fcHost;if(!h||!document.body.contains(h))return;const deck=fcState.deck;
   if(!deck.length||fcState.i>=deck.length){
     const nd=nextDue();
-    h.innerHTML=`<div class="empty">${deck.length?`Done: ${deck.length} card${deck.length===1?"":"s"} reviewed.`:"Nothing due in this set right now."} ${nd?`Next card is due ${new Date(nd).toLocaleString(undefined,{weekday:"short",hour:"numeric",minute:"2-digit"})}.`:""}<div class="row" style="justify-content:center;margin-top:12px"><button class="btn ghost" id="fall">Review all cards anyway</button></div></div>`;
-    $("#fall").onclick=()=>{fcState.dueOnly=false;V.cards();};return;}
+    h.innerHTML=`<div class="empty">${deck.length?`Done: ${deck.length} card${deck.length===1?"":"s"} reviewed.`:"Nothing due in this deck right now."} ${nd?`Next card is due ${new Date(nd).toLocaleString(undefined,{weekday:"short",hour:"numeric",minute:"2-digit"})}.`:""}<div class="row" style="justify-content:center;margin-top:12px"><button class="btn ghost" id="fall">Review all cards anyway</button><button class="btn" id="fback">Back to setup</button></div></div>`;
+    $("#fall").onclick=()=>{fcState.dueOnly=false;buildDeck();drawCard();};$("#fback").onclick=()=>V.cards();return;}
   const c=deck[fcState.i];const r=S.cards[c.k];
   h.innerHTML=`<div class="flash"><div class="tnum" style="margin-bottom:8px">${fcState.i+1} / ${deck.length} · ${r?`box ${r.b}${r.b>=MASTERED?" (mastered)":""}`:"new"}</div>
    <div class="fc ${fcState.flip?"flip":""}" id="fc" tabindex="0" role="button" aria-label="Flip card">
@@ -2550,8 +2632,17 @@ function search(q){
    <div class="results">${hits.map(h=>`<div class="res"><div class="tag">${esc(h.x.tag)}</div>${hlHTML(h.x.h,q)}</div>`).join("")||`<div class="empty">Nothing found. Try a shorter term.</div>`}</div></div>`;
 }
 let st;
-$("#gsearch").addEventListener("input",e=>{clearTimeout(st);const q=e.target.value.trim();st=setTimeout(()=>{if(q.length>=2){if(stopActive){stopActive();stopActive=null;}search(q);$$("#tabs a").forEach(a=>a.classList.remove("on"));}else route();},160);});
+$("#gsearch").addEventListener("input",e=>{clearTimeout(st);const q=e.target.value.trim();st=setTimeout(()=>{if(q.length>=2){if(stopActive){stopActive();stopActive=null;}search(q);$$("#tabs a, #subtabs a").forEach(a=>a.classList.remove("on"));}else route();},160);});
 
+/* ---------- navigation ---------- */
+const SECTIONS={learn:[["cheat","Cheat Sheet"],["acronyms","Acronyms",1],["regs","Laws & Bodies",1],["models","Models & Mnemonics"]],practice:[["quiz","Quiz"],["drill","Drills"],["exam","Practice Test"],["cards","Flashcards"],["dump","Brain Dump"]]};
+const secOf=v=>v==="plan"?"plan":v==="examday"?"examday":SECTIONS.learn.some(x=>x[0]===v)?"learn":"practice";
+function drawNav(){
+  const sec=secOf(currentView);if(sec==="learn"||sec==="practice"){S.prefs["last_"+sec]=currentView;save();}
+  $$("#tabs a").forEach(a=>{a.classList.toggle("on",a.dataset.sec===sec);if(a.dataset.sec==="learn"||a.dataset.sec==="practice")a.setAttribute("href","#"+(S.prefs["last_"+a.dataset.sec]||SECTIONS[a.dataset.sec][0][0]));});
+  const sub=$("#subtabs");const list=SECTIONS[sec];sub.hidden=!list;
+  if(list){sub.innerHTML=list.map(x=>`<a href="#${x[0]}" class="${x[0]===currentView?"on":""}">${esc(x[1])}${x[2]?'<span class="pip"></span>':""}</a>`).join("");const on=$("a.on",sub);if(on)on.scrollIntoView({block:"nearest",inline:"nearest"});}
+}
 /* ---------- routing ---------- */
 let currentView="plan";
 function route(){
@@ -2562,12 +2653,10 @@ function route(){
   if(stopActive){stopActive();stopActive=null;}
   clearInterval(dumpTimer);
   const gs=$("#gsearch");if(gs.value){gs.value="";}
-  $$("#tabs a").forEach(a=>a.classList.toggle("on",a.dataset.v===currentView));
-  const t=$(`#tabs a[data-v="${currentView}"]`);if(t)t.scrollIntoView({block:"nearest",inline:"nearest"});
+  drawNav();
   V[currentView]();window.scrollTo({top:0});
 }
 window.addEventListener("hashchange",route);
-if(S.profile&&S.profile.focus&&S.profile.focus.length)quizD=S.profile.focus[0];
 $("#setupBtn").onclick=()=>openSetup(false);
 $("#themeBtn").onclick=e=>openThemePicker(e.currentTarget);
 countdown();route();

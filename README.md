@@ -1,4 +1,6 @@
-# CISSP Cram Kit
+# CISSPrep
+
+A CISSP study guide.
 
 A single-page study site for the CISSP exam (ISC2 outline effective April 15, 2024).
 
