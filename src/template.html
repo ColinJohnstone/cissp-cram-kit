@@ -260,6 +260,8 @@ nav.tabs a{font-size:15px}
 .sbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding-bottom:12px;border-bottom:1px solid var(--line)}
 .sback{font:inherit;font-size:14px;font-weight:500;background:transparent;border:0;color:var(--accent);cursor:pointer;padding:4px 0}
 .stitle{font-family:var(--display);font-weight:700;font-size:18px}
+.homelink{color:inherit;text-decoration:none;display:inline-flex;align-items:baseline}
+.homelink:hover .brand2{text-decoration:underline;text-underline-offset:3px}
 .setupbtn{font:inherit;font-size:13px;color:var(--ink-2);background:transparent;border:1px solid var(--line);border-radius:999px;padding:3px 10px;cursor:pointer;white-space:nowrap}
 .setupbtn:hover{color:var(--ink);border-color:var(--line-2)}
 .ob{position:fixed;inset:0;z-index:50;background:color-mix(in srgb,var(--bg) 70%,transparent);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:grid;place-items:center;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));overflow:auto}
@@ -508,7 +510,7 @@ nav.tabs a{font-size:15px}
 <header class="top">
   <div class="wrap">
     <div class="brand">
-      <h1><span class="tagbox">CISSP</span><span class="brand2">rep</span></h1>
+      <h1><a href="#plan" class="homelink" id="homeLink" aria-label="CISSPrep home"><span class="tagbox">CISSP</span><span class="brand2">rep</span></a></h1>
       <span class="count" id="countdown"></span><button class="setupbtn" id="setupBtn">Edit setup</button><button class="setupbtn" id="themeBtn" aria-haspopup="true">Style</button>
       <span class="spacer"></span>
       <div class="search"><input id="gsearch" type="search" placeholder="Look up anything: OCSP, Biba, HIPAA, 800-88…" aria-label="Search everything"></div>

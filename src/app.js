@@ -974,6 +974,7 @@ function route(){
 }
 window.addEventListener("hashchange",route);
 $("#setupBtn").onclick=()=>openSetup(false);
+$("#homeLink").onclick=e=>{if((location.hash||"#plan")==="#plan"){e.preventDefault();route();}};
 $("#themeBtn").onclick=e=>openThemePicker(e.currentTarget);
 countdown();route();
 if(!S.profile||!S.profile.done)openSetup(true);
