@@ -15,6 +15,41 @@ let S={q:{},cards:{},exams:[],drill:{}};
 try{const raw=localStorage.getItem(KEY);if(raw)S=Object.assign(S,JSON.parse(raw));}catch(e){}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}};
 
+/* ---------- themes ---------- */
+const THEMES=[
+ {id:"system",name:"System",desc:"Follows your device"},
+ {id:"light",name:"Light",scheme:"light",t:{bg:"#ffffff",surface:"#ffffff","surface-2":"#f4f5f7",line:"#e6e8ec","line-2":"#cfd3da",ink:"#111418","ink-2":"#4b525c","ink-3":"#6f7680",accent:"#2448e0","accent-ink":"#ffffff","accent-soft":"#eef1fd",good:"#16794a","good-soft":"#ecf7f1",bad:"#c2312a","bad-soft":"#fcefee",mark:"#fff1b8"}},
+ {id:"dark",name:"Dark",scheme:"dark",t:{bg:"#111315",surface:"#111315","surface-2":"#1b1e22",line:"#26292e","line-2":"#3a3f46",ink:"#eceef1","ink-2":"#a8afb9","ink-3":"#848b96",accent:"#8aa2ff","accent-ink":"#0b0f1f","accent-soft":"#1a2140",good:"#5cc98f","good-soft":"#15261d",bad:"#ff7b72","bad-soft":"#2c1715",mark:"#4d4320"}},
+ {id:"paper",name:"Paper",scheme:"light",body:'"Source Serif 4",Georgia,serif',t:{bg:"#f6f1e7",surface:"#f6f1e7","surface-2":"#ece4d4",line:"#ddd2bf","line-2":"#c4b69d",ink:"#28231d","ink-2":"#544b40","ink-3":"#7a6f61",accent:"#2f6b4f","accent-ink":"#ffffff","accent-soft":"#e2ebe2",good:"#2f6b4f","good-soft":"#e2ece3",bad:"#a33a2a","bad-soft":"#f4e2dc",mark:"#f3df9a"}},
+ {id:"midnight",name:"Midnight",scheme:"dark",t:{bg:"#0e1726",surface:"#0e1726","surface-2":"#172338",line:"#22314d","line-2":"#34476b",ink:"#e6ecf7","ink-2":"#a9b6cf","ink-3":"#8492ad",accent:"#6fd3c1","accent-ink":"#06201b","accent-soft":"#123a3a",good:"#6fd3a0","good-soft":"#123222",bad:"#ff8f87","bad-soft":"#3a1c22",mark:"#4a4320"}},
+ {id:"console",name:"Console",scheme:"dark",body:'"JetBrains Mono",ui-monospace,Menlo,monospace',t:{bg:"#0a0e14",surface:"#0a0e14","surface-2":"#151d28",line:"#253244","line-2":"#38495e",ink:"#e9eef5","ink-2":"#a6b3c4","ink-3":"#7d8ca3",accent:"#ffb020","accent-ink":"#130d02","accent-soft":"#2a2110",good:"#4ade80","good-soft":"#10291b",bad:"#ff6b6b","bad-soft":"#33171a",mark:"#5a4410"}},
+ {id:"contrast",name:"High contrast",scheme:"light",t:{bg:"#ffffff",surface:"#ffffff","surface-2":"#ededed",line:"#000000","line-2":"#000000",ink:"#000000","ink-2":"#000000","ink-3":"#2b2b2b",accent:"#0033cc","accent-ink":"#ffffff","accent-soft":"#e3e9ff",good:"#005c1f","good-soft":"#dff3e5",bad:"#a80000","bad-soft":"#ffe1e1",mark:"#ffe600"}},
+];
+(function injectThemes(){
+  const css=THEMES.filter(x=>x.t).map(x=>`:root[data-skin="${x.id}"]{${Object.entries(x.t).map(([k,v])=>`--${k}:${v};`).join("")}color-scheme:${x.scheme};${x.body?`--body:${x.body};`:""}}`).join("\n");
+  const st=document.createElement("style");st.id="skins";st.textContent=css;document.head.appendChild(st);
+})();
+function applySkin(id){
+  const root=document.documentElement;if(!id||id==="system")delete root.dataset.skin;else root.dataset.skin=id;
+}
+function swatchHTML(sel){
+  const L=THEMES[1].t,D=THEMES[2].t;
+  return `<div class="swatches" role="radiogroup" aria-label="Theme">${THEMES.map(x=>{const t=x.t;
+    const bg=t?t.bg:`linear-gradient(135deg,${L.bg} 50%,${D.bg} 50%)`;const ink=t?t.ink:"#111418";const ac=t?t.accent:L.accent;const ln=t?t.line:L.line;
+    return `<button class="sw ${sel===x.id?"on":""}" role="radio" aria-checked="${sel===x.id}" data-skin="${x.id}"><span class="swprev" style="background:${bg};border-color:${ln}"><span style="color:${ink};font-family:${x.body||"var(--display)"}">Aa</span><i style="background:${ac}"></i></span><span class="swname">${esc(x.name)}</span></button>`;}).join("")}</div>`;
+}
+function bindSwatches(host,onPick){$$(".sw",host).forEach(b=>b.onclick=()=>{const id=b.dataset.skin;S.skin=id;save();applySkin(id);$$(".sw",host).forEach(x=>{x.classList.toggle("on",x===b);x.setAttribute("aria-checked",x===b);});if(onPick)onPick(id);});}
+applySkin(S.skin);
+function openThemePicker(btn){
+  const ex=$("#themepop");if(ex){ex.remove();return;}
+  const pop=document.createElement("div");pop.id="themepop";pop.className="themepop";pop.innerHTML=`<div class="tphead"><b>Theme</b><button class="chip" id="tpclose">Done</button></div>${swatchHTML(S.skin||"system")}`;
+  document.body.appendChild(pop);bindSwatches(pop);$("#tpclose").onclick=()=>pop.remove();
+  const onDoc=e=>{if(!pop.contains(e.target)&&e.target!==btn){pop.remove();document.removeEventListener("click",onDoc,true);}};
+  setTimeout(()=>document.addEventListener("click",onDoc,true),0);
+  const k=e=>{if(e.key==="Escape"){pop.remove();document.removeEventListener("keydown",k);}};document.addEventListener("keydown",k);
+  const f=$(".sw.on",pop);if(f)f.focus();
+}
+
 /* ---------- data prep ---------- */
 const seen=new Set();
 const ACR=ACRONYMS_RAW.trim().split("\n").map(l=>{const p=l.split("|");return {a:p[0].trim(),f:(p[1]||"").trim(),d:+p[2]||0,n:(p[3]||"").trim()};}).filter(x=>{if(!x.a||seen.has(x.a))return false;seen.add(x.a);return true;});
@@ -302,7 +337,8 @@ function openSetup(first){
     const steps=[
      ()=>`<p class="obstep">Step 1 of 3</p><h2 id="obTitle">${first?"Welcome to the CISSP Cram Kit":"Your setup"}</h2>
        <p class="lede" style="margin-bottom:18px">A cheat sheet, acronym and regulator drills, quizzes and timed practice tests for the CISSP. Three quick questions and it builds a study plan around your exam date.</p>
-       <label class="field" for="obName"><span>What should we call you?</span><input id="obName" type="text" autocomplete="given-name" maxlength="40" placeholder="First name (optional)" value="${esc(draft.name)}"></label>`,
+       <label class="field" for="obName"><span>What should we call you?</span><input id="obName" type="text" autocomplete="given-name" maxlength="40" placeholder="First name (optional)" value="${esc(draft.name)}"></label>
+       <div class="field" style="margin-top:18px"><span>Pick a look</span>${swatchHTML(S.skin||"system")}</div>`,
      ()=>`<p class="obstep">Step 2 of 3</p><h2 id="obTitle">When is your exam?</h2>
        <p class="lede" style="margin-bottom:18px">The plan spreads all 8 domains across the days you have left, with a full practice test near the end and a light day before.</p>
        <label class="field" for="obDate"><span>Exam date</span><input id="obDate" type="date" min="${minDate}" value="${esc(draft.date)}"></label>
@@ -315,6 +351,7 @@ function openSetup(first){
     ];
     ov.innerHTML=`<div class="obbox"><div class="obbody">${steps[step]()}</div>
       <div class="row obnav">${step>0?`<button class="btn ghost" id="obBack">Back</button>`:first?`<button class="btn ghost" id="obSkip">Skip for now</button>`:`<button class="btn ghost" id="obCancel">Cancel</button>`}<span style="flex:1"></span><span class="obdots">${[0,1,2].map(i=>`<i class="${i===step?"on":""}"></i>`).join("")}</span><button class="btn" id="obNext">${step<2?"Next":"Build my plan"}</button></div></div>`;
+    bindSwatches(ov);
     const nm=$("#obName",ov);if(nm){nm.oninput=e=>draft.name=e.target.value.trim();nm.focus();nm.onkeydown=e=>{if(e.key==="Enter")$("#obNext",ov).click();};}
     const dt=$("#obDate",ov);if(dt){dt.onchange=dt.oninput=e=>draft.date=e.target.value;dt.focus();}
     $$("[data-f]",ov).forEach(c=>c.onchange=()=>{const id=+c.dataset.f;c.checked?draft.focus.add(id):draft.focus.delete(id);});
@@ -758,6 +795,7 @@ function route(){
 window.addEventListener("hashchange",route);
 if(S.profile&&S.profile.focus&&S.profile.focus.length)quizD=S.profile.focus[0];
 $("#setupBtn").onclick=()=>openSetup(false);
+$("#themeBtn").onclick=e=>openThemePicker(e.currentTarget);
 countdown();route();
 if(!S.profile||!S.profile.done)openSetup(true);
 })();

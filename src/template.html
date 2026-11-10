@@ -2,7 +2,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
 <style>
 /* Layout: flat, minimal — plain top bar with text tabs, single 1040px column, hairline dividers instead of boxes; one accent */
 :root{
@@ -36,6 +36,7 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;backgroun
 .brand h1{font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:-.005em;margin:0;display:flex;align-items:baseline;gap:6px;line-height:1.1}
 .brand h1 .tagbox{color:var(--accent)}
 .brand .count{font-size:13px;color:var(--ink-3);white-space:nowrap}
+#themeBtn{margin-left:-6px}
 .brand .spacer{flex:1}
 .search{flex:1 1 240px;min-width:0;max-width:380px}
 .search input{width:100%;font:inherit;font-size:14px;padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink)}
@@ -182,6 +183,15 @@ table.osi td{font-size:13px}
 .smart>div{flex:1 1 260px;min-width:0}
 .srsbar{display:flex;gap:18px;flex-wrap:wrap;margin-top:14px;font-size:14px;color:var(--ink-3)}
 .srsbar b{color:var(--ink);font-variant-numeric:tabular-nums}
+.swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:10px;font-weight:400}
+.sw{font:inherit;display:flex;flex-direction:column;gap:6px;align-items:stretch;padding:0;border:0;background:transparent;color:var(--ink-2);cursor:pointer;text-align:left}
+.swprev{position:relative;height:56px;border-radius:8px;border:1px solid;display:flex;align-items:flex-end;padding:6px 8px;font-size:18px;font-weight:700}
+.swprev i{position:absolute;top:8px;right:8px;width:10px;height:10px;border-radius:50%}
+.sw.on .swprev{outline:2px solid var(--accent);outline-offset:2px}
+.sw.on .swname{color:var(--ink);font-weight:600}
+.swname{font-size:13px}
+.themepop{position:fixed;z-index:40;top:calc(env(safe-area-inset-top,0px) + 64px);right:max(16px,env(safe-area-inset-right,0px));width:min(380px,calc(100vw - 32px));background:var(--bg);border:1px solid var(--line-2);border-radius:12px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.18)}
+.tphead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
 .setupbtn{font:inherit;font-size:13px;color:var(--ink-2);background:transparent;border:1px solid var(--line);border-radius:999px;padding:3px 10px;cursor:pointer;white-space:nowrap}
 .setupbtn:hover{color:var(--ink);border-color:var(--line-2)}
 .ob{position:fixed;inset:0;z-index:50;background:color-mix(in srgb,var(--bg) 70%,transparent);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:grid;place-items:center;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));overflow:auto}
@@ -221,7 +231,7 @@ table.osi td{font-size:13px}
   <div class="wrap">
     <div class="brand">
       <h1><span class="tagbox">CISSP</span>Cram Kit</h1>
-      <span class="count" id="countdown"></span><button class="setupbtn" id="setupBtn">Edit setup</button>
+      <span class="count" id="countdown"></span><button class="setupbtn" id="setupBtn">Edit setup</button><button class="setupbtn" id="themeBtn" aria-haspopup="true">Theme</button>
       <span class="spacer"></span>
       <div class="search"><input id="gsearch" type="search" placeholder="Look up anything: OCSP, Biba, HIPAA, 800-88…" aria-label="Search everything"></div>
     </div>

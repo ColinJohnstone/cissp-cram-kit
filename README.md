@@ -2,7 +2,8 @@
 
 A single-page study site for the CISSP exam (ISC2 outline effective April 15, 2024).
 
-- **Setup** – first visit asks for a name, exam date and focus areas (editable any time)
+- **Setup** – first visit asks for a name, theme, exam date and focus areas (editable any time)
+- **Themes** – System, Light, Dark, Paper, Midnight, Console, High contrast (header → Theme)
 - **Plan** – study plan generated from your exam date and focus areas (daily, or weekly if 3+ weeks out), domain mastery, "think like a manager" rules
 - **Cheat Sheet** – highest-yield facts for all 8 domains, plus formulas and memory aids
 - **Acronyms** – ~420 acronyms tagged by domain, with commonly confused pairs
