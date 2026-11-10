@@ -34,7 +34,10 @@ const REV=REVIEW.map((d,i)=>{
     return a;});
   return {id,code:d.code,review,formulas:d.formulas,aids,topics:d.topics};
 });
-const QS=QUESTIONS.map((q,i)=>({id:"q"+i,d:q[0],q:q[1],ans:q[2][0],opts:q[2],ex:q[3]}));
+const MODEL_ITEMS=MODELS.filter(m=>m.ord).map(m=>({id:"m:"+m.id,d:m.d,type:"order",q:`Put in order: ${m.name}`,items:m.steps.map(x=>x[0]),ex:`Mnemonic: ${m.mn}`}));
+const QS=[...QUESTIONS.map((q,i)=>({id:"q"+i,d:q[0],type:"single",q:q[1],ans:q[2][0],opts:q[2],ex:q[3]})),
+  ...ADVANCED.map((a,i)=>a.type==="multi"?{id:"a"+i,d:a.d,type:"multi",q:a.q,opts:[...a.correct,...a.wrong],correct:a.correct,ex:a.ex}:{id:"a"+i,d:a.d,type:a.type,q:a.q,pairs:a.pairs,ex:a.ex}),
+  ...MODEL_ITEMS];
 
 /* ---------- confusable pairs ---------- */
 const PAIRS=[
@@ -103,49 +106,103 @@ function hlHTML(html,q){ // highlight inside text nodes only
 }
 function domChips(sel,opts={}){
   let h=opts.all!==false?`<button class="chip ${sel===0?"on":""}" data-dom="0">All</button>`:"";
-  DOMAINS.forEach(d=>{h+=`<button class="chip ${sel===d.id?"on":""}" data-dom="${d.id}">${d.id} · ${d.code}<span class="w">${d.w}%</span></button>`;});
+  DOMAINS.forEach(d=>{h+=`<button class="chip ${sel===d.id?"on":""}" data-dom="${d.id}">D${d.id} ${d.code}<span class="w">${d.w}%</span></button>`;});
   if(opts.extra)h+=opts.extra;
   return `<div class="chips">${h}</div>`;
 }
 function countdown(){
   const now=new Date();const days=Math.ceil((new Date(2026,10,16)-new Date(now.getFullYear(),now.getMonth(),now.getDate()))/864e5);
-  $("#countdown").textContent=days>1?`${days} days to exam · Mon Nov 16`:days===1?"Exam tomorrow":days===0?"Exam day":"";
+  $("#countdown").textContent=days>1?`T-${days} days · exam Mon 16 Nov`:days===1?"T-1 · exam tomorrow":days===0?"T-0 · exam day":"";
 }
 
 /* ---------- quiz engine ---------- */
-// items: {id,d,q,opts:[...],ans,ex,tag}
+// item types: single {opts,ans} · multi {opts,correct:[...]} · order {items} · match {pairs}
+function ansText(it){
+  if(it.type==="multi")return it.correct.join(" · ");
+  if(it.type==="order")return it.items.map((x,i)=>`${i+1}. ${x}`).join("  ");
+  if(it.type==="match")return it.pairs.map(p=>`${p[0]} → ${p[1]}`).join(" · ");
+  return it.ans;
+}
+function typeLabel(it){return it.type==="multi"?"Multi-select":it.type==="order"?"Put in order":it.type==="match"?"Matching":"";}
 function runQuiz(host,items,cfg){
-  let i=0,right=0;const log=[];let picked=null;let timerId=null;const exam=cfg.exam;
+  let i=0,right=0;const log=[];let timerId=null;const exam=cfg.exam;
   const end=exam?Date.now()+cfg.minutes*60000:0;
-  const order=items.map(it=>({...it,shuffled:shuffle(it.opts)}));
+  const order=items.map(it=>{const t=it.type||"single";const o={...it,type:t};
+    if(t==="single"||t==="multi")o.shuffled=shuffle(it.opts);
+    if(t==="order"){let s=shuffle(it.items);let g=0;while(s.join("|")===it.items.join("|")&&g++<10)s=shuffle(it.items);o.cur=s;}
+    if(t==="match")o.rights=shuffle(it.pairs.map(p=>p[1]));
+    return o;});
   function tick(){const el=$("#timer",host);if(!el)return;const left=Math.max(0,end-Date.now());const m=Math.floor(left/60000),s=Math.floor(left%60000/1000);el.textContent=`${m}:${String(s).padStart(2,"0")}`;el.classList.toggle("warn",left<5*60000);if(left<=0){clearInterval(timerId);finish(true);}}
+  function body(it){
+    if(it.type==="single"||it.type==="multi")return `<div class="opts" role="${it.type==="multi"?"group":"radiogroup"}">${it.shuffled.map((o,k)=>`<button class="opt ${it.type==="multi"?"multi":""}" data-k="${k}" aria-pressed="false"><span class="k">${it.type==="multi"?'<span class="box"></span>':"ABCDEF"[k]}</span><span>${esc(o)}</span></button>`).join("")}</div>`;
+    if(it.type==="order")return `<ol class="ordlist" id="ordlist">${it.cur.map((x,k)=>`<li data-k="${k}"><span class="ordtxt">${esc(x)}</span><span class="ordbtns"><button class="mv" data-dir="-1" data-k="${k}" aria-label="Move up" ${k===0?"disabled":""}>↑</button><button class="mv" data-dir="1" data-k="${k}" aria-label="Move down" ${k===it.cur.length-1?"disabled":""}>↓</button></span></li>`).join("")}</ol>`;
+    if(it.type==="match")return `<div class="matchgrid">${it.pairs.map((p,k)=>`<label class="mrow" for="m${k}"><span class="ml">${esc(p[0])}</span><select id="m${k}" data-k="${k}"><option value="">Choose…</option>${it.rights.map(r=>`<option>${esc(r)}</option>`).join("")}</select></label>`).join("")}</div>`;
+  }
   function draw(){
-    const it=order[i];picked=null;
+    const it=order[i];
+    const needSubmit=exam||it.type!=="single";
     host.innerHTML=`<div class="qcard">
       <div class="progress"><i style="width:${100*i/order.length}%"></i></div>
-      <div class="qmeta"><span>Question ${i+1} of ${order.length}${it.d?` · Domain ${it.d}: ${esc(DNAME[it.d])}`:""}${it.tag?` · ${esc(it.tag)}`:""}</span>${exam?`<span class="timer" id="timer"></span>`:`<span class="tnum">${right} correct</span>`}</div>
+      <div class="qmeta"><span>Question ${i+1} of ${order.length}${it.d?` · Domain ${it.d}: ${esc(DNAME[it.d])}`:""}${it.tag?` · ${esc(it.tag)}`:""}${typeLabel(it)?` · <b class="qtype">${typeLabel(it)}</b>`:""}</span>${exam?`<span class="timer" id="timer"></span>`:`<span class="tnum">${right} correct</span>`}</div>
       <p class="qtext">${esc(it.q)}</p>
-      <div class="opts">${it.shuffled.map((o,k)=>`<button class="opt" data-k="${k}"><span class="k">${"ABCD"[k]}</span><span>${esc(o)}</span></button>`).join("")}</div>
+      ${body(it)}
       <div id="fb"></div>
-      <div class="row" style="margin-top:14px">${exam?`<button class="btn" id="submit" disabled>Submit answer</button><span class="muted" style="font-size:13px">Forward-only, like the real CAT.</span>`:""}<span style="flex:1"></span><button class="btn ghost" id="quit">End ${exam?"test":"quiz"}</button></div>
+      <div class="row" id="ctl" style="margin-top:14px">${needSubmit?`<button class="btn" id="submit" ${it.type==="order"?"":"disabled"}>Submit answer</button>`:""}${exam?`<span class="muted" style="font-size:13px">Forward-only, like the real CAT.</span>`:""}<span style="flex:1"></span><button class="btn ghost" id="quit">End ${exam?"test":"quiz"}</button></div>
     </div>`;
     if(exam)tick();
-    $$(".opt",host).forEach(b=>b.onclick=()=>{
-      const k=+b.dataset.k;
-      if(exam){picked=k;$$(".opt",host).forEach(x=>x.classList.toggle("picked",+x.dataset.k===k));$("#submit",host).disabled=false;return;}
-      answer(k);
-    });
-    if(exam)$("#submit",host).onclick=()=>{if(picked!=null)answer(picked);};
+    const sub=$("#submit",host);
+    if(it.type==="single"){
+      $$(".opt",host).forEach(b=>b.onclick=()=>{const k=+b.dataset.k;
+        if(!exam){answer(it.shuffled[k]);return;}
+        it.pick=k;$$(".opt",host).forEach(x=>{x.classList.toggle("picked",+x.dataset.k===k);x.setAttribute("aria-pressed",+x.dataset.k===k);});sub.disabled=false;});
+      if(sub)sub.onclick=()=>{if(it.pick!=null)answer(it.shuffled[it.pick]);};
+    }
+    if(it.type==="multi"){
+      it.sel=new Set();
+      $$(".opt",host).forEach(b=>b.onclick=()=>{const k=+b.dataset.k;it.sel.has(k)?it.sel.delete(k):it.sel.add(k);b.classList.toggle("picked",it.sel.has(k));b.setAttribute("aria-pressed",it.sel.has(k));sub.disabled=!it.sel.size;});
+      sub.onclick=()=>answer([...it.sel].map(k=>it.shuffled[k]));
+    }
+    if(it.type==="order"){
+      draw2bind(it);
+      sub.onclick=()=>answer(it.cur.slice());
+    }
+    if(it.type==="match"){
+      const upd=()=>{sub.disabled=$$("select",host).some(s=>!s.value);};
+      $$("select",host).forEach(s=>s.onchange=upd);
+      sub.onclick=()=>answer($$("select",host).map(s=>s.value));
+    }
     $("#quit",host).onclick=()=>finish(false);
   }
-  function answer(k){
-    const it=order[i];const ok=it.shuffled[k]===it.ans;if(ok)right++;
-    log.push({it,ok,given:it.shuffled[k]});
-    if(it.id&&it.id[0]==="q"){const s=stat(it.id);s[ok?0:1]++;S.q[it.id]=s;save();}
-    if(cfg.onAnswer)cfg.onAnswer(it,ok);
+  function draw2bind(it){ // rebind order buttons after reorder
+    $$(".mv",host).forEach(b=>b.onclick=()=>{const k=+b.dataset.k,j=k+ +b.dataset.dir;[it.cur[k],it.cur[j]]=[it.cur[j],it.cur[k]];const y=window.scrollY;$("#ordlist",host).outerHTML=body(it);draw2bind(it);window.scrollTo({top:y});const nb=$(`.mv[data-k="${j}"][data-dir="${b.dataset.dir}"]`,host)||$(`.mv[data-k="${j}"]`,host);if(nb)nb.focus();});
+  }
+  function grade(it,given){
+    if(it.type==="single")return given===it.ans;
+    if(it.type==="multi")return given.length===it.correct.length&&given.every(g=>it.correct.includes(g));
+    if(it.type==="order")return given.join("|")===it.items.join("|");
+    if(it.type==="match")return given.every((g,k)=>g===it.pairs[k][1]);
+  }
+  function givenText(it,given){
+    if(it.type==="single")return given;
+    if(it.type==="multi")return given.join(" · ")||"(none)";
+    if(it.type==="order")return given.map((x,k)=>`${k+1}. ${x}`).join("  ");
+    if(it.type==="match")return it.pairs.map((p,k)=>`${p[0]} → ${given[k]||"?"}`).join(" · ");
+  }
+  function answer(given){
+    const it=order[i];const ok=grade(it,given);if(ok)right++;
+    log.push({it,ok,given:givenText(it,given)});
+    if(it.id){const s=stat(it.id);s[ok?0:1]++;S.q[it.id]=s;save();}
     if(exam){i++;i<order.length?draw():finish(false);return;}
-    $$(".opt",host).forEach(b=>{b.disabled=true;const t=it.shuffled[+b.dataset.k];if(t===it.ans)b.classList.add("right");else if(+b.dataset.k===k)b.classList.add("wrong");});
-    $("#fb",host).innerHTML=`<div class="explain"><b class="${ok?"ok":"no"}">${ok?"Correct.":"Not quite."}</b> ${esc(it.ex||"")}</div>
+    // feedback
+    if(it.type==="single"||it.type==="multi"){
+      const good=it.type==="single"?[it.ans]:it.correct;const chosen=it.type==="single"?[given]:given;
+      $$(".opt",host).forEach(b=>{b.disabled=true;const t=it.shuffled[+b.dataset.k];if(good.includes(t))b.classList.add("right");else if(chosen.includes(t))b.classList.add("wrong");});
+    }
+    if(it.type==="order"){$$(".mv",host).forEach(b=>b.disabled=true);$$("#ordlist li",host).forEach((li,k)=>li.classList.add(it.cur[k]===it.items[k]?"right":"wrong"));}
+    if(it.type==="match"){$$("select",host).forEach((s,k)=>{s.disabled=true;s.closest(".mrow").classList.add(s.value===it.pairs[k][1]?"right":"wrong");});}
+    const sub=$("#submit",host);if(sub)sub.remove();
+    const showKey=it.type==="order"||it.type==="match"||(it.type==="multi"&&!ok);
+    $("#fb",host).innerHTML=`<div class="explain"><b class="${ok?"ok":"no"}">${ok?"Correct.":"Not quite."}</b> ${showKey&&!ok?`<div style="margin:6px 0"><b>Answer:</b> ${esc(ansText(it))}</div>`:""}${esc(it.ex||"")}</div>
       <div class="row" style="margin-top:12px"><button class="btn" id="next">${i+1<order.length?"Next question →":"See results"}</button></div>`;
     const nb=$("#next",host);nb.focus();nb.onclick=()=>{i++;i<order.length?draw():finish(false);};
   }
@@ -164,11 +221,11 @@ function runQuiz(host,items,cfg){
       ${Object.keys(byDom).some(k=>+k)?`<div class="mast" style="margin-top:16px">${Object.keys(byDom).filter(k=>+k).sort().map(d=>{const[r,w]=byDom[d];const p=Math.round(100*r/(r+w));return `<span class="dnum">${d}</span><div class="bar ${barClass(p)}"><i style="width:${p}%"></i></div><span class="tnum">${r}/${r+w}</span>`;}).join("")}</div>`:""}
       ${exam?`<p class="muted" style="font-size:13px;margin:12px 0 0">Practice benchmark: aim for 75%+ on these to feel safe. The real exam is scaled (700/1000) and adaptive, so this isn't a direct conversion.</p>`:""}
       <div class="row" style="margin-top:16px"><button class="btn" id="again">Go again</button>${misses.length?`<button class="btn ghost" id="redo">Retry the ${misses.length} I missed</button>`:""}</div></div>
-      ${misses.length?`<div class="card"><h3>Review what you missed</h3><ol class="review">${misses.map(l=>`<li><b>${esc(l.it.q)}</b><br><span style="color:var(--bad)">Your answer: ${esc(l.given)}</span><br><span style="color:var(--good)">Correct: ${esc(l.it.ans)}</span><br><span class="muted">${esc(l.it.ex||"")}</span></li>`).join("")}</ol></div>`:""}
+      ${misses.length?`<div class="card"><h3>Review what you missed</h3><ol class="review">${misses.map(l=>`<li><b>${esc(l.it.q)}</b><br><span style="color:var(--bad)">Your answer: ${esc(l.given)}</span><br><span style="color:var(--good)">Correct: ${esc(ansText(l.it))}</span><br><span class="muted">${esc(l.it.ex||"")}</span></li>`).join("")}</ol></div>`:""}
     </div>`;
     $("#again",host).onclick=()=>cfg.again();
     const rd=$("#redo",host);if(rd)rd.onclick=()=>runQuiz(host,misses.map(l=>l.it),{...cfg,exam:false});
-    window.scrollTo({top:0});
+    if(cfg.scrollTop!==false)window.scrollTo({top:0});
   }
   draw();
   if(exam)timerId=setInterval(tick,1000);
@@ -192,7 +249,7 @@ V.plan=()=>{
   ];
   const ex=S.exams.slice(0,5);
   app.innerHTML=`<div class="stack">
-   <div><h2>Six days to Monday</h2><p class="lede">Built from your study guide and its quick-review set, checked against the current ISC2 outline. Acronyms and regulators get their own tabs and drills. Your progress saves in this browser.</p></div>
+   <div><h2>Mission brief</h2><p class="lede">Built from your study guide and its quick-review set, checked against the current ISC2 outline. Acronyms and regulators get their own tabs and drills. Your progress saves in this browser.</p></div>
    <dl class="facts">${EXAMFACTS.map(f=>`<div><dt>${esc(f[0])}</dt><dd>${esc(f[1])}</dd></div>`).join("")}</dl>
    <div class="grid2">
     <div class="card"><h3>Cram plan</h3><div class="plan">${days.map(d=>`<div class="day ${ymd(d[0])===ymd(today)?"today":""} ${d[1].startsWith("Mon")?"exam":""}"><div class="when"><b>${d[1].split(" ")[0]}</b>${d[1].split(" ").slice(1).join(" ")}</div><ul>${d[2].map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`).join("")}</div></div>
@@ -274,26 +331,68 @@ V.regs=()=>{
 /* ---------- drills (generated) ---------- */
 let drillState={mode:"acr",d:0,n:15};
 const MODES=[
- ["acr","Acronym → meaning"],["rev","Meaning → acronym"],["body","Body → what it does"],["law","Description → law"],["std","Standard → topic"],["mix","Mixed regulatory"]
+ ["acr","Acronym → meaning"],["rev","Meaning → acronym"],["body","Body → what it does"],["law","Description → law"],["std","Standard → topic"],["stdrev","Topic → standard"],["mix","Mixed regulatory"]
 ];
-function mc(correct,pool,key){ // pick 3 distinct distractors
-  const others=shuffle(pool.filter(p=>p[key]!==correct[key])).map(p=>p[key]);const out=[];for(const o of others){if(!out.includes(o)&&o!==correct[key])out.push(o);if(out.length===3)break;}return out;
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const mainPart=f=>f.replace(/\s*\((?:or|also)[^)]*\)\s*$/i,"").trim();
+// word bank by initial letter, built from every real expansion
+const BANK={};const REAL=new Set(ACR.map(x=>mainPart(x.f).toLowerCase()));
+ACR.forEach(x=>mainPart(x.f).split(/\s+/).forEach(w=>{const m=w.match(/^([A-Z][a-z]{2,})[,.]?$/);if(m)(BANK[m[1][0]]=BANK[m[1][0]]||new Set()).add(m[1]);}));
+Object.keys(BANK).forEach(k=>BANK[k]=[...BANK[k]]);
+function fakeExpansions(x,n){ // same initials, different words
+  const base=mainPart(x.f);const words=base.split(/\s+/);
+  const sig=words.map((w,i)=>/^[A-Z][a-z]{2,}[,.]?$/.test(w)&&BANK[w[0]]&&BANK[w[0]].length>1?i:-1).filter(i=>i>=0);
+  const out=new Set();let tries=0;
+  while(out.size<n&&tries++<300&&sig.length){
+    const w=words.slice();const k=1+Math.floor(Math.random()*Math.min(sig.length,tries>60?3:2));
+    shuffle(sig).slice(0,k).forEach(i=>{const m=w[i].match(/^([A-Za-z]+)(\W*)$/);const cand=BANK[m[1][0]].filter(z=>z!==m[1]);if(cand.length)w[i]=pick(cand)+m[2];});
+    const s=w.join(" ");if(s!==base&&!REAL.has(s.toLowerCase()))out.add(s);
+  }
+  return [...out];
+}
+const ACRSET=new Set(ACR.map(x=>x.a));
+function lev(a,b){const d=Array.from({length:a.length+1},(_,i)=>[i]);for(let j=1;j<=b.length;j++)d[0][j]=j;for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[a.length][b.length];}
+function fakeAcronyms(a,n){ // look-alike acronyms: real near-misses first, then mutations
+  const out=new Set();
+  shuffle(ACR.map(x=>x.a).filter(z=>z!==a&&Math.abs(z.length-a.length)<=1&&lev(z,a)<=2)).slice(0,2).forEach(z=>out.add(z));
+  const L="ACDEIKMPRSTV".split("");const idx=[...a].map((c,i)=>/[A-Z]/.test(c)?i:-1).filter(i=>i>=0);let tries=0;
+  while(out.size<n&&tries++<200&&idx.length){
+    let c=[...a];const r=Math.random();
+    if(r<.35&&idx.length>1){const i=pick(idx.slice(0,-1));const j=idx[idx.indexOf(i)+1];[c[i],c[j]]=[c[j],c[i]];}
+    else if(r<.8){c[pick(idx)]=pick(L);}
+    else{c.splice(pick(idx)+1,0,pick(L));}
+    const s=c.join("");if(s!==a&&!out.has(s))out.add(s);
+  }
+  return [...out].slice(0,n);
+}
+function redact(text,name){
+  let t=text;const parts=[name,...name.split(/[\s/]+/).filter(p=>p.length>=3&&!/^(and|the|of|for|act|rule|law)$/i.test(p))];
+  parts.sort((x,y)=>y.length-x.length).forEach(p=>{t=t.replace(new RegExp(p.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"),"g"),"▢▢▢");});
+  return t;
+}
+function distract(item,pool,key,n=3){ // prefer same region / family
+  const fam=x=>(x.r||x.n.split(/[\s/]/)[0]);
+  const same=shuffle(pool.filter(p=>p!==item&&fam(p)===fam(item)));const rest=shuffle(pool.filter(p=>p!==item&&fam(p)!==fam(item)));
+  const out=[];for(const p of [...same,...rest]){if(!out.includes(p[key])&&p[key]!==item[key])out.push(p[key]);if(out.length===n)break;}return out;
 }
 function buildDrill(mode,d,n){
   const items=[];
   const acrPool=ACR.filter(x=>d===0||(d===-1?x.d===0:x.d===d));
-  const near=(x)=>{const same=ACR.filter(y=>y.d===x.d&&y.a!==x.a);return same.length>=6?same:ACR;};
-  if(mode==="acr")sample(acrPool,n).forEach(x=>items.push({d:x.d,q:`What does ${x.a} stand for?`,ans:x.f,opts:[x.f,...mc(x,near(x),"f")],ex:x.n?`${x.a} = ${x.f}. ${x.n}`:`${x.a} = ${x.f}.`,tag:"Acronym"}));
-  if(mode==="rev")sample(acrPool,n).forEach(x=>items.push({d:x.d,q:`Which acronym means "${x.f}"?`,ans:x.a,opts:[x.a,...mc(x,near(x),"a")],ex:x.n?`${x.a}: ${x.n}`:"",tag:"Acronym"}));
-  const bodyQ=b=>({d:1,q:`Which body: ${b.w}`,ans:b.n,opts:[b.n,...mc(b,BODIES,"n")],ex:`${b.n} = ${b.f} (${b.r}). ${b.x}`,tag:"Body"});
-  const lawQ=b=>({d:1,q:`Which law or regulation: ${b.w}`,ans:b.n,opts:[b.n,...mc(b,LAWS,"n")],ex:`${b.n} = ${b.f} (${b.r}). ${b.x}`,tag:"Law"});
-  const stdQ=b=>({d:1,q:`What is ${b.n}?`,ans:b.w,opts:[b.w,...mc(b,STANDARDS,"w")],ex:"",tag:"Standard"});
+  if(mode==="acr")sample(acrPool,n).forEach(x=>{const ans=mainPart(x.f);let f=fakeExpansions(x,3);
+    if(f.length<3)f=f.concat(shuffle(ACR.filter(y=>y.a!==x.a&&y.a[0]===x.a[0])).map(y=>mainPart(y.f))).filter((v,i,a)=>a.indexOf(v)===i&&v!==ans).slice(0,3);
+    items.push({d:x.d,q:`What does ${x.a} stand for?`,ans,opts:[ans,...f.slice(0,3)],ex:`${x.a} = ${x.f}.${x.n?" "+x.n:""}`,tag:"Acronym"});});
+  if(mode==="rev")sample(acrPool,n).forEach(x=>items.push({d:x.d,q:`Which acronym means "${mainPart(x.f)}"?`,ans:x.a,opts:[x.a,...fakeAcronyms(x.a,3)],ex:x.n?`${x.a}: ${x.n}`:"",tag:"Acronym"}));
+  const bodyQ=b=>({d:1,q:`Which body? ${redact(b.w,b.n)}`,ans:b.n,opts:[b.n,...distract(b,BODIES,"n")],ex:`${b.n} = ${b.f} (${b.r}). ${b.x}`,tag:"Body"});
+  const lawQ=b=>({d:1,q:`Which law or regulation? ${redact(b.w,b.n)}`,ans:b.n,opts:[b.n,...distract(b,LAWS,"n")],ex:`${b.n} = ${b.f} (${b.r}). ${b.x}`,tag:"Law"});
+  const stdQ=b=>({d:1,q:`What is ${b.n}?`,ans:b.w,opts:[b.w,...distract(b,STANDARDS,"w")],ex:"",tag:"Standard"});
+  const stdRevQ=b=>({d:1,q:`Which standard? ${redact(b.w,b.n)}`,ans:b.n,opts:[b.n,...distract(b,STANDARDS,"n")],ex:`${b.n}: ${b.w}`,tag:"Standard"});
   const enfQ=e=>({d:1,q:`Who enforces or oversees ${e[0]}?`,ans:e[1],opts:[e[1],...shuffle(ENFORCE.filter(x=>x[1]!==e[1]).map(x=>x[1])).slice(0,3)],ex:"",tag:"Enforcement"});
   if(mode==="body")sample(BODIES,n).forEach(b=>items.push(bodyQ(b)));
   if(mode==="law")sample(LAWS,n).forEach(b=>items.push(lawQ(b)));
   if(mode==="std")sample(STANDARDS,n).forEach(b=>items.push(stdQ(b)));
-  if(mode==="mix"){const all=[...BODIES.map(bodyQ),...LAWS.map(lawQ),...STANDARDS.map(stdQ),...ENFORCE.map(enfQ)];sample(all,n).forEach(x=>items.push(x));}
-  return items;
+  if(mode==="stdrev")sample(STANDARDS,n).forEach(b=>items.push(stdRevQ(b)));
+  if(mode==="mix"){const all=[...BODIES.map(bodyQ),...LAWS.map(lawQ),...STANDARDS.map(stdRevQ),...ENFORCE.map(enfQ)];sample(all,n).forEach(x=>items.push(x));}
+  return items.filter(x=>x.opts.length===4);
 }
 V.drill=()=>{
   app.innerHTML=`<div class="stack">
@@ -312,27 +411,35 @@ V.drill=()=>{
 };
 
 /* ---------- domain quiz ---------- */
-let quizD=1;
+let quizD=1,quizT="all";
+const QTYPES=[["all","All types"],["single","Multiple choice"],["multi","Multi-select"],["dnd","Order & match"]];
 V.quiz=()=>{
   const missN=QS.filter(q=>stat(q.id)[1]>stat(q.id)[0]).length;
+  const cnt=t=>QS.filter(q=>t==="all"||(t==="dnd"?(q.type==="order"||q.type==="match"):q.type===t)).length;
   app.innerHTML=`<div class="stack">
-   <div><h2>Domain Quiz</h2><p class="lede">Scenario questions written in the exam's style, with an explanation after each answer. ${QS.length} questions in the bank.</p>
+   <div><h2>Domain Quiz</h2><p class="lede">${QS.length} items: scenario multiple choice, multi-select ("Choose TWO", "Select ALL that apply"), and drag-and-drop style ordering and matching. Explanation after each answer.</p>
    ${domChips(quizD,{extra:`<button class="chip ${quizD===-1?"on":""}" data-dom="-1">My misses (${missN})</button>`})}
+   <div class="chips" id="qtypes" style="margin-top:10px">${QTYPES.map(t=>`<button class="chip ${quizT===t[0]?"on":""}" data-t="${t[0]}">${t[1]} <span class="w">${cnt(t[0])}</span></button>`).join("")}</div>
    <div class="row" style="margin-top:12px"><button class="btn" id="qstart">Start 10 questions</button><span class="muted" style="font-size:13px" id="qinfo"></span></div></div>
    <div id="qhost"></div></div>`;
   const info=()=>{const pool=quizPool();$("#qinfo").textContent=`${pool.length} available`;};
   info();
   $$(".chip[data-dom]",app).forEach(c=>c.onclick=()=>{quizD=+c.dataset.dom;$$(".chip[data-dom]",app).forEach(x=>x.classList.toggle("on",x===c));info();});
-  const start=()=>{const pool=quizPool();const h=$("#qhost");if(!pool.length){h.innerHTML=`<div class="empty">Nothing here yet. Miss a few questions first.</div>`;return;}runQuiz(h,sample(pool,10),{again:start});h.scrollIntoView({behavior:"smooth",block:"start"});};
+  $$("#qtypes .chip").forEach(c=>c.onclick=()=>{quizT=c.dataset.t;$$("#qtypes .chip").forEach(x=>x.classList.toggle("on",x===c));info();});
+  const start=()=>{const pool=quizPool();const h=$("#qhost");if(!pool.length){h.innerHTML=`<div class="empty">Nothing matches that filter yet.</div>`;return;}runQuiz(h,sample(pool,10),{again:start});h.scrollIntoView({behavior:"smooth",block:"start"});};
   $("#qstart").onclick=start;
 };
-function quizPool(){if(quizD===-1)return QS.filter(q=>stat(q.id)[1]>stat(q.id)[0]);if(quizD===0)return QS;return QS.filter(q=>q.d===quizD);}
+function quizPool(){
+  let p=quizD===-1?QS.filter(q=>stat(q.id)[1]>stat(q.id)[0]):quizD===0?QS:QS.filter(q=>q.d===quizD);
+  if(quizT!=="all")p=p.filter(q=>quizT==="dnd"?(q.type==="order"||q.type==="match"):q.type===quizT);
+  return p;
+}
 
 /* ---------- practice test ---------- */
-const LENGTHS=[[25,30,"Sprint"],[50,60,"Half"],[100,120,"Full pool"]];
+const LENGTHS=[[25,30,"Sprint"],[50,60,"Half"],[100,120,"Minimum length"],[150,180,"Maximum length"]];
 V.exam=()=>{
   app.innerHTML=`<div class="stack">
-   <div><h2>Practice Test</h2><p class="lede">Timed, mixed-domain and weighted to the official domain percentages. Forward-only with no feedback until the end, like the CAT. The real exam gives about 72 seconds per question at 150 items, so these use the same pace.</p>
+   <div><h2>Practice Test</h2><p class="lede">Timed, mixed-domain and weighted to the official domain percentages. Forward-only with no feedback until the end, like the CAT. About 1 in 5 items are multi-select, ordering or matching. The real exam gives about 72 seconds per question at 150 items, so these use the same pace.</p>
    <div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">${LENGTHS.map(l=>`<div class="card"><h4>${l[2]}</h4><div class="score" style="font-size:34px">${l[0]}</div><p class="muted" style="margin:4px 0 12px">questions · ${l[1]} minutes</p><button class="btn" data-len="${l[0]}" data-min="${l[1]}">Start</button></div>`).join("")}</div></div>
    <div id="ehost"></div></div>`;
   $$("[data-len]",app).forEach(b=>b.onclick=()=>{
@@ -341,11 +448,40 @@ V.exam=()=>{
     start();
   });
 };
-function weighted(n){
-  const out=[];const byD={};QS.forEach(q=>(byD[q.d]=byD[q.d]||[]).push(q));
-  DOMAINS.forEach(d=>{const k=Math.min(byD[d.id].length,Math.round(n*d.w/100));out.push(...sample(byD[d.id],k));});
+function weighted(n){ // ~80% multiple choice, ~20% multi-select / order / match per domain
+  const out=[];const byD={};QS.forEach(q=>{const g=q.type==="single"?"s":"a";((byD[q.d]=byD[q.d]||{s:[],a:[]})[g]).push(q);});
+  DOMAINS.forEach(d=>{const k=Math.round(n*d.w/100);const ka=Math.min(byD[d.id].a.length,Math.max(1,Math.round(k*0.2)));out.push(...sample(byD[d.id].a,ka),...sample(byD[d.id].s,Math.min(byD[d.id].s.length,k-ka)));});
   const rest=shuffle(QS.filter(q=>!out.includes(q)));while(out.length<n&&rest.length)out.push(rest.pop());
   return shuffle(out.slice(0,n));
+}
+
+
+/* ---------- models & mnemonics ---------- */
+let modD=0;
+function mnHTML(mn){ // bold the first letter of each word in the mnemonic
+  return esc(mn).replace(/(^|[\s(—–:\-·,"])([A-Za-z])/g,"$1<b class=\"ml1\">$2</b>");
+}
+V.models=()=>{
+  const list=MODELS.filter(m=>!modD||m.d===modD);
+  app.innerHTML=`<div class="stack">
+   <div><h2>Models &amp; Mnemonics</h2><p class="lede">Every sequence and list the exam likes to test, with a way to remember it. Hit <b>Test me</b> to rebuild the order from scrambled pieces. These ordering items also appear in the quizzes and practice tests.</p>
+   ${domChips(modD)}
+   <div class="row" style="margin-top:12px"><button class="btn" id="mall">Drill 8 random sequences</button></div>
+   <div id="mhost" style="margin-top:14px"></div></div>
+   <div class="mgrid">${list.map(m=>`<article class="card model" id="mod-${m.id}">
+     <div class="row" style="gap:8px;margin-bottom:6px"><span class="dnum">${m.d}</span><h3 style="margin:0;flex:1;min-width:0">${esc(m.name)}</h3></div>
+     <p class="mn">${mnHTML(m.mn)}</p>${m.alt?`<p class="muted" style="font-size:13px;margin:-4px 0 10px">${esc(m.alt)}</p>`:""}
+     ${m.id==="osi"?osiTable(m):`<${m.ord?"ol":"ul"} class="steps">${m.steps.map(st=>`<li><b>${esc(st[0])}</b>${st[1]?` <span class="muted">— ${esc(st[1])}</span>`:""}</li>`).join("")}</${m.ord?"ol":"ul"}>`}
+     ${m.ord?`<div class="row" style="margin-top:10px"><button class="btn ghost" data-test="${m.id}">Test me</button></div><div class="thost"></div>`:""}
+   </article>`).join("")}</div></div>`;
+  $$(".chip[data-dom]",app).forEach(c=>c.onclick=()=>{modD=+c.dataset.dom;V.models();});
+  $$("[data-test]",app).forEach(b=>b.onclick=()=>{const it=MODEL_ITEMS.find(x=>x.id==="m:"+b.dataset.test);const h=b.closest(".model").querySelector(".thost");const go=()=>runQuiz(h,[it],{again:go,scrollTop:false});go();});
+  const all=()=>{const h=$("#mhost");const pool=MODEL_ITEMS.filter(x=>!modD||x.d===modD);runQuiz(h,sample(pool,Math.min(8,pool.length)),{again:all,scrollTop:false});h.scrollIntoView({behavior:"smooth",block:"start"});};
+  $("#mall").onclick=all;
+};
+function osiTable(m){
+  const rows=m.steps.map((s,i)=>({n:i+1,name:s[0],note:s[1]})).reverse();
+  return `<div class="tblwrap" style="margin-top:4px"><table class="osi"><thead><tr><th>#</th><th>Layer</th><th>PDU · protocols · devices</th></tr></thead><tbody>${rows.map(r=>`<tr><td class="tnum">${r.n}</td><td><b>${esc(r.name)}</b><div class="muted" style="font-size:12px">${"Please Do Not Throw Sausage Pizza Away".split(" ")[r.n-1]} · ${"All People Seem To Need Data Processing".split(" ")[7-r.n]}</div></td><td>${esc(r.note)}</td></tr>`).join("")}</tbody></table></div>`;
 }
 
 /* ---------- flashcards ---------- */
@@ -355,6 +491,7 @@ function buildDeck(){
   if(fcState.src==="study")REV.forEach(r=>{if(d&&r.id!==d)return;r.review.forEach(c=>cards.push({k:"s:"+r.id+":"+c.t,f:c.t,b:c.d,src:`Study set · Domain ${r.id}`}));});
   if(fcState.src==="acr")ACR.forEach(x=>{if(d&&x.d!==d)return;cards.push({k:"a:"+x.a,f:x.a,b:x.f+(x.n?` — ${x.n}`:""),src:`Acronym · Domain ${x.d||"all"}`});});
   if(fcState.src==="regs"){BODIES.forEach(b=>cards.push({k:"b:"+b.n,f:b.n,b:`${b.f} (${b.r}). ${b.w}`,src:"Body"}));LAWS.forEach(b=>cards.push({k:"l:"+b.n,f:b.n,b:`${b.f} (${b.r}). ${b.w} ${b.x}`,src:"Law"}));STANDARDS.forEach(b=>cards.push({k:"t:"+b.n,f:b.n,b:b.w,src:"Standard"}));}
+  if(fcState.src==="models")MODELS.forEach(m=>{if(d&&m.d!==d)return;cards.push({k:"m:"+m.id,f:m.name,b:`${m.mn}\n\n${m.steps.map((x,i)=>(m.ord?(i+1)+". ":"• ")+x[0]).join("\n")}`,src:`Model · Domain ${m.d}`});});
   if(fcState.hideKnown)cards=cards.filter(c=>!S.cards[c.k]);
   fcState.deck=shuffle(cards);fcState.i=0;fcState.flip=false;
 }
@@ -363,7 +500,7 @@ V.cards=()=>{
   const known=Object.keys(S.cards).length;
   app.innerHTML=`<div class="stack">
    <div><h2>Flashcards</h2><p class="lede">Tap the card to flip it. Mark <b>Got it</b> to retire a card, or <b>Again</b> to keep it in rotation. Keys: space flips, → next, 1 again, 2 got it.</p>
-   <div class="chips" id="fsrc">${[["study",`Study set (${REV.reduce((a,r)=>a+r.review.length,0)})`],["acr",`Acronyms (${ACR.length})`],["regs",`Laws & bodies (${BODIES.length+LAWS.length+STANDARDS.length})`]].map(s=>`<button class="chip ${fcState.src===s[0]?"on":""}" data-s="${s[0]}">${esc(s[1])}</button>`).join("")}</div>
+   <div class="chips" id="fsrc">${[["study",`Study set (${REV.reduce((a,r)=>a+r.review.length,0)})`],["acr",`Acronyms (${ACR.length})`],["regs",`Laws & bodies (${BODIES.length+LAWS.length+STANDARDS.length})`],["models",`Models & mnemonics (${MODELS.length})`]].map(s=>`<button class="chip ${fcState.src===s[0]?"on":""}" data-s="${s[0]}">${esc(s[1])}</button>`).join("")}</div>
    <div id="fdom" style="margin-top:10px">${fcState.src==="regs"?"":domChips(fcState.d)}</div>
    <div class="row" style="margin-top:10px;font-size:14px"><label class="row" style="gap:6px"><input type="checkbox" id="hidek" ${fcState.hideKnown?"checked":""}> Hide cards I've marked "Got it"</label><span class="tnum">${known} retired</span>${known?`<button class="chip" id="resetk">Reset</button>`:""}</div></div>
    <div id="fhost"></div></div>`;
@@ -406,6 +543,7 @@ function buildIndex(){
   ACR.forEach(x=>INDEX.push({tag:`Acronym · D${x.d||"–"}`,h:`<b class="mono" style="color:var(--accent)">${esc(x.a)}</b> — ${esc(x.f)}${x.n?`<div class="muted">${esc(x.n)}</div>`:""}`,t:x.a+" "+x.f+" "+x.n,w:x.a}));
   BODIES.forEach(b=>INDEX.push({tag:"Regulatory body",h:`<b>${esc(b.n)}</b> — ${esc(b.f)} (${esc(b.r)})<div>${esc(b.w)}</div>`,t:Object.values(b).join(" "),w:b.n}));
   LAWS.forEach(b=>INDEX.push({tag:"Law / regulation",h:`<b>${esc(b.n)}</b> — ${esc(b.f)} (${esc(b.r)})<div>${esc(b.w)}</div><div class="muted">${esc(b.x)}</div>`,t:Object.values(b).join(" "),w:b.n}));
+  MODELS.forEach(m=>INDEX.push({tag:`Model · D${m.d}`,h:`<b>${esc(m.name)}</b> — <i>${esc(m.mn)}</i><div>${m.steps.map(x=>esc(x[0])).join(" → ")}</div>`,t:m.name+" "+m.mn+" "+m.steps.map(x=>x.join(" ")).join(" "),w:m.name}));
   STANDARDS.forEach(b=>INDEX.push({tag:"Standard",h:`<b>${esc(b.n)}</b> — ${esc(b.w)}`,t:b.n+" "+b.w,w:b.n}));
   DOMAINS.forEach(d=>CHEAT[d.id].forEach(bl=>bl[1].forEach(x=>INDEX.push({tag:`Cheat sheet · D${d.id} · ${bl[0]}`,h:x,t:strip(x),w:""}))));
   REV.forEach(r=>{r.review.forEach(c=>INDEX.push({tag:`Study set · D${r.id}`,h:`<b>${esc(c.t)}</b> — ${esc(c.d)}`,t:c.t+" "+c.d,w:c.t}));r.topics.forEach(c=>INDEX.push({tag:`Concept · D${r.id}`,h:`<b>${esc(c.t)}</b> — ${esc(c.d)}`,t:c.t+" "+c.d,w:c.t}));});
