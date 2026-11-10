@@ -15,34 +15,43 @@ let S={q:{},cards:{},exams:[],drill:{}};
 try{const raw=localStorage.getItem(KEY);if(raw)S=Object.assign(S,JSON.parse(raw));}catch(e){}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}};
 
-/* ---------- themes ---------- */
+/* ---------- design styles (themes) ---------- */
+// Each style is a full design system: tokens + component rules live in the stylesheet under :root[data-skin="…"].
+const GF="https://fonts.googleapis.com/css2?";
 const THEMES=[
- {id:"system",name:"System",desc:"Follows your device"},
- {id:"light",name:"Light",scheme:"light",t:{bg:"#ffffff",surface:"#ffffff","surface-2":"#f4f5f7",line:"#e6e8ec","line-2":"#cfd3da",ink:"#111418","ink-2":"#4b525c","ink-3":"#6f7680",accent:"#2448e0","accent-ink":"#ffffff","accent-soft":"#eef1fd",good:"#16794a","good-soft":"#ecf7f1",bad:"#c2312a","bad-soft":"#fcefee",mark:"#fff1b8"}},
- {id:"dark",name:"Dark",scheme:"dark",t:{bg:"#111315",surface:"#111315","surface-2":"#1b1e22",line:"#26292e","line-2":"#3a3f46",ink:"#eceef1","ink-2":"#a8afb9","ink-3":"#848b96",accent:"#8aa2ff","accent-ink":"#0b0f1f","accent-soft":"#1a2140",good:"#5cc98f","good-soft":"#15261d",bad:"#ff7b72","bad-soft":"#2c1715",mark:"#4d4320"}},
- {id:"paper",name:"Paper",scheme:"light",body:'"Source Serif 4",Georgia,serif',t:{bg:"#f6f1e7",surface:"#f6f1e7","surface-2":"#ece4d4",line:"#ddd2bf","line-2":"#c4b69d",ink:"#28231d","ink-2":"#544b40","ink-3":"#7a6f61",accent:"#2f6b4f","accent-ink":"#ffffff","accent-soft":"#e2ebe2",good:"#2f6b4f","good-soft":"#e2ece3",bad:"#a33a2a","bad-soft":"#f4e2dc",mark:"#f3df9a"}},
- {id:"midnight",name:"Midnight",scheme:"dark",t:{bg:"#0e1726",surface:"#0e1726","surface-2":"#172338",line:"#22314d","line-2":"#34476b",ink:"#e6ecf7","ink-2":"#a9b6cf","ink-3":"#8492ad",accent:"#6fd3c1","accent-ink":"#06201b","accent-soft":"#123a3a",good:"#6fd3a0","good-soft":"#123222",bad:"#ff8f87","bad-soft":"#3a1c22",mark:"#4a4320"}},
- {id:"console",name:"Console",scheme:"dark",body:'"JetBrains Mono",ui-monospace,Menlo,monospace',t:{bg:"#0a0e14",surface:"#0a0e14","surface-2":"#151d28",line:"#253244","line-2":"#38495e",ink:"#e9eef5","ink-2":"#a6b3c4","ink-3":"#7d8ca3",accent:"#ffb020","accent-ink":"#130d02","accent-soft":"#2a2110",good:"#4ade80","good-soft":"#10291b",bad:"#ff6b6b","bad-soft":"#33171a",mark:"#5a4410"}},
- {id:"contrast",name:"High contrast",scheme:"light",t:{bg:"#ffffff",surface:"#ffffff","surface-2":"#ededed",line:"#000000","line-2":"#000000",ink:"#000000","ink-2":"#000000","ink-3":"#2b2b2b",accent:"#0033cc","accent-ink":"#ffffff","accent-soft":"#e3e9ff",good:"#005c1f","good-soft":"#dff3e5",bad:"#a80000","bad-soft":"#ffe1e1",mark:"#ffe600"}},
+ {id:"system",name:"Minimal",desc:"Clean and quiet; follows your device's light or dark mode",p:{bg:"linear-gradient(135deg,#ffffff 50%,#111315 50%)",ink:"#111418",accent:"#2448e0",bd:"1px solid #cfd3da",r:"8px",sh:"none",font:"'Chakra Petch',sans-serif"}},
+ {id:"swiss",name:"Swiss",desc:"Bold grotesque type, strict grid, thick rules, one red accent",fonts:"family=Inter+Tight:wght@400;500;600;700;800",p:{bg:"#ffffff",ink:"#111",accent:"#e30613",bd:"3px solid #111",r:"0",sh:"none",font:"'Inter Tight',sans-serif",w:800}},
+ {id:"brutal",name:"Neo-brutalist",desc:"Chunky type, thick borders, hard offset shadows, loud colour",fonts:"family=Archivo+Black&family=Work+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700",p:{bg:"#e9e4ff",ink:"#111",accent:"#ff5c35",bd:"3px solid #111",r:"8px",sh:"4px 4px 0 #111",font:"'Archivo Black',sans-serif"}},
+ {id:"editorial",name:"Editorial",desc:"Magazine serif, drop caps, double rules, roomy reading",fonts:"family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500;1,9..144,600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400",p:{bg:"#f5f2eb",ink:"#1d1a16",accent:"#8c1c13",bd:"1px solid #a99f8b",r:"2px",sh:"none",font:"'Fraunces',serif",it:1}},
+ {id:"terminal",name:"Terminal",desc:"Amber phosphor CRT: monospace, scanlines, blinking cursor",fonts:"family=VT323&family=IBM+Plex+Mono:wght@400;500;600",p:{bg:"#0b0d0a",ink:"#ffc965",accent:"#ffb000",bd:"1px dashed #5c4d27",r:"0",sh:"none",font:"'VT323',monospace"}},
+ {id:"glass",name:"Glass",desc:"Frosted panels over a soft aurora, pill buttons",fonts:"family=Manrope:wght@400;500;600;700;800",p:{bg:"radial-gradient(circle at 20% 10%,#0f766e,transparent 60%),radial-gradient(circle at 90% 40%,#c2410c99,transparent 60%),#0c1320",ink:"#f3f6fb",accent:"#ffb38a",bd:"1px solid rgba(255,255,255,.3)",r:"14px",sh:"0 6px 20px rgba(0,0,0,.3)",font:"'Manrope',sans-serif",w:800}},
+ {id:"blueprint",name:"Blueprint",desc:"Engineering drawing: grid paper, dashed outlines, technical type",fonts:"family=IBM+Plex+Sans+Condensed:wght@400;500;600",p:{bg:"#0d3b85",ink:"#f4f8ff",accent:"#ffd166",bd:"1px dashed rgba(255,255,255,.7)",r:"0",sh:"none",font:"'Chakra Petch',sans-serif",grid:1}},
+ {id:"contrast",name:"High contrast",desc:"Hyperlegible type, larger text, heavy borders, strong focus",fonts:"family=Atkinson+Hyperlegible:wght@400;700",p:{bg:"#ffffff",ink:"#000",accent:"#0000c8",bd:"2px solid #000",r:"4px",sh:"none",font:"'Atkinson Hyperlegible',sans-serif",w:700}},
 ];
-(function injectThemes(){
-  const css=THEMES.filter(x=>x.t).map(x=>`:root[data-skin="${x.id}"]{${Object.entries(x.t).map(([k,v])=>`--${k}:${v};`).join("")}color-scheme:${x.scheme};${x.body?`--body:${x.body};`:""}}`).join("\n");
-  const st=document.createElement("style");st.id="skins";st.textContent=css;document.head.appendChild(st);
-})();
+const LEGACY_SKIN={light:"system",dark:"system",paper:"editorial",midnight:"glass",console:"terminal"};
+function ensureFonts(t){if(!t||!t.fonts||document.getElementById("gf-"+t.id))return;const l=document.createElement("link");l.id="gf-"+t.id;l.rel="stylesheet";l.href=GF+t.fonts+"&display=swap";document.head.appendChild(l);}
 function applySkin(id){
-  const root=document.documentElement;if(!id||id==="system")delete root.dataset.skin;else root.dataset.skin=id;
+  id=LEGACY_SKIN[id]||id;const t=THEMES.find(x=>x.id===id);const root=document.documentElement;
+  if(!t||id==="system")delete root.dataset.skin;else{ensureFonts(t);root.dataset.skin=id;}
 }
 function swatchHTML(sel){
-  const L=THEMES[1].t,D=THEMES[2].t;
-  return `<div class="swatches" role="radiogroup" aria-label="Theme">${THEMES.map(x=>{const t=x.t;
-    const bg=t?t.bg:`linear-gradient(135deg,${L.bg} 50%,${D.bg} 50%)`;const ink=t?t.ink:"#111418";const ac=t?t.accent:L.accent;const ln=t?t.line:L.line;
-    return `<button class="sw ${sel===x.id?"on":""}" role="radio" aria-checked="${sel===x.id}" data-skin="${x.id}"><span class="swprev" style="background:${bg};border-color:${ln}"><span style="color:${ink};font-family:${x.body||"var(--display)"}">Aa</span><i style="background:${ac}"></i></span><span class="swname">${esc(x.name)}</span></button>`;}).join("")}</div>`;
+  sel=LEGACY_SKIN[sel]||sel;
+  return `<div class="swatches" role="radiogroup" aria-label="Design style">${THEMES.map(x=>{const p=x.p;
+    return `<button class="sw ${sel===x.id?"on":""}" role="radio" aria-checked="${sel===x.id}" data-skin="${x.id}" title="${esc(x.desc)}">
+      <span class="swprev" style="background:${p.bg};${p.grid?"background-image:linear-gradient(rgba(255,255,255,.18) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.18) 1px,transparent 1px);background-size:10px 10px;":""}">
+        <span class="swcard" style="border:${p.bd};border-radius:${p.r};box-shadow:${p.sh};${x.id==="glass"?"background:rgba(255,255,255,.12);":x.id==="system"?"background:rgba(255,255,255,.75);":""}">
+          <span class="swaa" style="color:${x.id==="system"?"#111":p.ink};font-family:${p.font};font-weight:${p.w||700};${p.it?"font-style:italic;":""}">Aa</span>
+          <i style="background:${p.accent};border-radius:${p.r==="0"?"0":"999px"};${x.id==="brutal"?"border:2px solid #111;":""}"></i></span></span>
+      <span class="swname">${esc(x.name)}</span></button>`;}).join("")}</div>`;
 }
-function bindSwatches(host,onPick){$$(".sw",host).forEach(b=>b.onclick=()=>{const id=b.dataset.skin;S.skin=id;save();applySkin(id);$$(".sw",host).forEach(x=>{x.classList.toggle("on",x===b);x.setAttribute("aria-checked",x===b);});if(onPick)onPick(id);});}
+function bindSwatches(host,onPick){$$(".sw",host).forEach(b=>b.onclick=()=>{const id=b.dataset.skin;S.skin=id;save();applySkin(id);$$(".sw",host).forEach(x=>{x.classList.toggle("on",x===b);x.setAttribute("aria-checked",x===b);});const d=$(".swdesc",host);if(d)d.textContent=THEMES.find(t=>t.id===id).desc;if(onPick)onPick(id);});}
 applySkin(S.skin);
 function openThemePicker(btn){
   const ex=$("#themepop");if(ex){ex.remove();return;}
-  const pop=document.createElement("div");pop.id="themepop";pop.className="themepop";pop.innerHTML=`<div class="tphead"><b>Theme</b><button class="chip" id="tpclose">Done</button></div>${swatchHTML(S.skin||"system")}`;
+  THEMES.forEach(ensureFonts);
+  const cur=LEGACY_SKIN[S.skin]||S.skin||"system";
+  const pop=document.createElement("div");pop.id="themepop";pop.className="themepop";pop.setAttribute("role","dialog");pop.setAttribute("aria-label","Design style");
+  pop.innerHTML=`<div class="tphead"><b>Design style</b><button class="chip" id="tpclose">Done</button></div>${swatchHTML(cur)}<p class="swdesc">${esc(THEMES.find(t=>t.id===cur).desc)}</p>`;
   document.body.appendChild(pop);bindSwatches(pop);$("#tpclose").onclick=()=>pop.remove();
   const onDoc=e=>{if(!pop.contains(e.target)&&e.target!==btn){pop.remove();document.removeEventListener("click",onDoc,true);}};
   setTimeout(()=>document.addEventListener("click",onDoc,true),0);
@@ -358,7 +367,7 @@ function openSetup(first){
      ()=>`<p class="obstep">Step 1 of 3</p><h2 id="obTitle">${first?"Welcome to CISSPrep":"Your setup"}</h2>
        <p class="lede" style="margin-bottom:18px">Your CISSP study guide: cheat sheets, acronym and regulator drills, quizzes and timed practice tests. Three quick questions and it builds a study plan around your exam date.</p>
        <label class="field" for="obName"><span>What should we call you?</span><input id="obName" type="text" autocomplete="given-name" maxlength="40" placeholder="First name (optional)" value="${esc(draft.name)}"></label>
-       <div class="field" style="margin-top:18px"><span>Pick a look</span>${swatchHTML(S.skin||"system")}</div>`,
+       <div class="field" style="margin-top:18px"><span>Pick a design style</span>${swatchHTML(S.skin||"system")}<p class="swdesc">${esc((THEMES.find(t=>t.id===(LEGACY_SKIN[S.skin]||S.skin||"system"))||THEMES[0]).desc)}</p></div>`,
      ()=>`<p class="obstep">Step 2 of 3</p><h2 id="obTitle">When is your exam?</h2>
        <p class="lede" style="margin-bottom:18px">The plan spreads all 8 domains across the days you have left, with a full practice test near the end and a light day before.</p>
        <label class="field" for="obDate"><span>Exam date</span><input id="obDate" type="date" min="${minDate}" value="${esc(draft.date)}"></label>
@@ -371,7 +380,7 @@ function openSetup(first){
     ];
     ov.innerHTML=`<div class="obbox"><div class="obbody">${steps[step]()}</div>
       <div class="row obnav">${step>0?`<button class="btn ghost" id="obBack">Back</button>`:first?`<button class="btn ghost" id="obSkip">Skip for now</button>`:`<button class="btn ghost" id="obCancel">Cancel</button>`}<span style="flex:1"></span><span class="obdots">${[0,1,2].map(i=>`<i class="${i===step?"on":""}"></i>`).join("")}</span><button class="btn" id="obNext">${step<2?"Next":"Build my plan"}</button></div></div>`;
-    bindSwatches(ov);
+    THEMES.forEach(ensureFonts);bindSwatches(ov);
     const nm=$("#obName",ov);if(nm){nm.oninput=e=>draft.name=e.target.value.trim();nm.focus();nm.onkeydown=e=>{if(e.key==="Enter")$("#obNext",ov).click();};}
     const dt=$("#obDate",ov);if(dt){dt.onchange=dt.oninput=e=>draft.date=e.target.value;dt.focus();}
     $$("[data-f]",ov).forEach(c=>c.onchange=()=>{const id=+c.dataset.f;c.checked?draft.focus.add(id):draft.focus.delete(id);});
@@ -402,7 +411,7 @@ V.plan=()=>{
     :plan.past?`<div class="empty" style="text-align:left">Hope it went well! Set a new date if you're retaking it. <button class="btn ghost" id="addDate" style="margin-left:8px">Edit setup</button></div>`
     :`<div class="plan">${plan.rows.map(r=>`<div class="day ${r.today?"today":""} ${r.exam?"exam":""}"><div class="when"><b>${r.exam?"Exam":esc(r.label.split(",")[0])}</b>${r.exam?esc(r.label):r.sub?esc(r.sub):esc(r.label.split(",").slice(1).join(",")||"")}</div><ul>${r.items.map(x=>`<li>${x.h?`<a class="plink" href="${x.h}">${esc(x.t)}</a>`:esc(x.t)}</li>`).join("")}</ul></div>`).join("")}</div>`;
   app.innerHTML=`<div class="stack">
-   <div><h2>${head}</h2><p class="lede">Built from a comprehensive CISSP study guide and its quick-review set, checked against the current ISC2 outline. Your setup and progress stay in this browser only.</p></div>
+   <div><h2>${head}</h2><p class="lede dc">Built from a comprehensive CISSP study guide and its quick-review set, checked against the current ISC2 outline. Your setup and progress stay in this browser only.</p></div>
    <dl class="facts">${EXAMFACTS.map(f=>`<div><dt>${esc(f[0])}</dt><dd>${esc(f[1])}</dd></div>`).join("")}</dl>
    <div class="grid2">
     <div class="card"><div class="row" style="justify-content:space-between;margin-bottom:8px"><h3 style="margin:0">${plan&&plan.mode==="week"?"Weekly plan":"Study plan"}</h3><button class="chip" id="editPlan">Edit setup</button></div>
@@ -437,7 +446,7 @@ V.plan=()=>{
 
 V.cheat=()=>{
   app.innerHTML=`<div class="stack">
-   <div><h2>Cheat Sheet</h2><p class="lede">The highest-yield facts per domain. Each domain also has the study set's formulas and memory aids, collapsed.</p>${domChips(0)}</div>
+   <div><h2>Cheat Sheet</h2><p class="lede dc">The highest-yield facts per domain. Each domain also has the study set's formulas and memory aids, collapsed.</p>${domChips(0)}</div>
    ${DOMAINS.map(d=>{const r=REV[d.id-1];return `<section class="dsec card" id="d${d.id}">
      <div class="dhead"><span class="dnum">${d.id}</span><h3 style="margin:0">${esc(d.name)}</h3><span class="wt">${d.w}% of exam</span></div>
      <div class="grid2">${CHEAT[d.id].map(b=>`<div class="blk"><h3>${esc(b[0])}</h3><ul>${b[1].map(x=>`<li>${x}</li>`).join("")}</ul></div>`).join("")}</div>
@@ -640,7 +649,7 @@ const DRILL_NAMES=Object.fromEntries(DRILL_GROUPS.flatMap(g=>g[1]).map(m=>[m[0],
 V.drill=()=>{
   const p=pref("drill",{mode:"acr",doms:[],len:15});if(drillState.mode&&drillState.mode!==p.mode&&DRILL_NAMES[drillState.mode]){p.mode=drillState.mode;}drillState.mode=null;
   const acrMode=()=>p.mode==="acr"||p.mode==="rev";
-  app.innerHTML=`<div class="stack"><div><h2>Drills</h2><p class="lede">Fast rounds generated fresh every time. Pick a drill, set the options, start.</p></div>
+  app.innerHTML=`<div class="stack"><div><h2>Drills</h2><p class="lede dc">Fast rounds generated fresh every time. Pick a drill, set the options, start.</p></div>
    ${panelHTML("Set up a drill","",[
      fRow("Drill",`<div class="dmodes">${DRILL_GROUPS.map(g=>`<div class="dgroup"><div class="dgname">${g[0]}</div><div class="dgcards">${g[1].map(m=>`<button class="dmode ${p.mode===m[0]?"on":""}" data-mode="${m[0]}" role="radio" aria-checked="${p.mode===m[0]}"><b>${esc(m[1])}</b><span>${esc(m[2])}</span></button>`).join("")}</div></div>`).join("")}</div>`),
      fRow("Domains",domPickHTML("dd",p.doms),{id:"ddRow",hidden:!acrMode(),hint:"Acronym drills only"}),
@@ -879,7 +888,7 @@ const LINKS=[
 V.examday=()=>{
   const n=daysLeft();
   app.innerHTML=`<div class="stack">
-   <div><h2>Exam Day</h2><p class="lede">What to expect at the test centre and after you pass. Rules change, so confirm the details on ISC2's exam day page and in your Pearson VUE confirmation email${n!=null&&n>=0&&n<=7?" this week":""}.</p></div>
+   <div><h2>Exam Day</h2><p class="lede dc">What to expect at the test centre and after you pass. Rules change, so confirm the details on ISC2's exam day page and in your Pearson VUE confirmation email${n!=null&&n>=0&&n<=7?" this week":""}.</p></div>
    <div class="grid2">
     <div class="card"><h3>The week before</h3><ul class="bl">
      <li>Make sure the name on your Pearson VUE booking <b>exactly</b> matches your ID. Third-party guides say mismatches can't be fixed on the day.</li>
