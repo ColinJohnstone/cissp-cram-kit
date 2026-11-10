@@ -17,7 +17,7 @@ HEAD = """<!doctype html>
 """
 
 data = "".join((SRC / f).read_text(encoding="utf-8") + "\n"
-               for f in ["acronyms.js", "regs.js", "cheat.js", "questions.js", "advanced.js", "models.js", "manager.js"])
+               for f in ["acronyms.js", "regs.js", "cheat.js", "questions.js", "questions2.js", "advanced.js", "models.js", "manager.js", "hotspot.js"])
 review = json.loads((SRC / "review.json").read_text(encoding="utf-8"))
 data += "const REVIEW=" + json.dumps(review, ensure_ascii=False).replace("</", "<\\/") + ";\n"
 app = (SRC / "app.js").read_text(encoding="utf-8")

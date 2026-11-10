@@ -192,6 +192,33 @@ table.osi td{font-size:13px}
 .swname{font-size:13px}
 .themepop{position:fixed;z-index:40;top:calc(env(safe-area-inset-top,0px) + 64px);right:max(16px,env(safe-area-inset-right,0px));width:min(380px,calc(100vw - 32px));background:var(--bg);border:1px solid var(--line-2);border-radius:12px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.18)}
 .tphead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.hotwrap{overflow-x:auto}
+svg.hot{width:100%;max-width:720px;height:auto;display:block}
+svg.hot-net{min-width:520px}
+svg.hot-osi{max-width:440px}
+svg.hot .hlink{stroke:var(--line-2);stroke-width:2}
+svg.hot .hz rect{fill:var(--surface-2);stroke:var(--line-2);stroke-width:1.5;transition:fill .15s}
+svg.hot .hz{cursor:pointer;outline:none}
+svg.hot .hz:hover rect,svg.hot .hz:focus-visible rect{stroke:var(--accent);stroke-width:2}
+svg.hot .hz.picked rect{fill:var(--accent-soft);stroke:var(--accent);stroke-width:2.5}
+svg.hot .hz.right rect{fill:var(--good-soft);stroke:var(--good);stroke-width:2.5}
+svg.hot .hz.wrong rect{fill:var(--bad-soft);stroke:var(--bad);stroke-width:2.5}
+svg.hot .hz.done{cursor:default}
+.hzl{width:100%;height:100%;display:flex;align-items:center;justify-content:center;text-align:center;font:500 13px/1.25 var(--body);color:var(--ink);pointer-events:none}
+.dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:28px 32px}
+.dgrid>*{min-width:0}
+.dumpc{border-top:1px solid var(--line);padding-top:16px}
+.dumpc h3{font-size:16px}
+.dumpc textarea{width:100%;font-family:var(--mono);font-size:13px;line-height:1.5;padding:10px 12px;border-radius:8px;border:1px solid var(--line-2);background:var(--bg);color:var(--ink);resize:vertical}
+.dumpc textarea:focus{outline:none;border-color:var(--accent)}
+.dlist{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:3px;font-size:13.5px}
+.dlist.ans{padding-left:20px;list-style:revert}
+.dlist li.ok{color:var(--good)} .dlist li.miss{color:var(--ink-3)}
+ul.bl{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px}
+.links{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}
+.lnk{display:flex;flex-direction:column;gap:2px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;text-decoration:none;color:var(--ink);font-size:14px;min-width:0}
+.lnk:hover{border-color:var(--accent)}
+.lnk .tag{font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:.06em}
 .setupbtn{font:inherit;font-size:13px;color:var(--ink-2);background:transparent;border:1px solid var(--line);border-radius:999px;padding:3px 10px;cursor:pointer;white-space:nowrap}
 .setupbtn:hover{color:var(--ink);border-color:var(--line-2)}
 .ob{position:fixed;inset:0;z-index:50;background:color-mix(in srgb,var(--bg) 70%,transparent);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:grid;place-items:center;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));overflow:auto}
@@ -245,6 +272,8 @@ table.osi td{font-size:13px}
       <a href="#quiz" data-v="quiz">Domain Quiz</a>
       <a href="#exam" data-v="exam">Practice Test</a>
       <a href="#cards" data-v="cards">Flashcards</a>
+      <a href="#dump" data-v="dump">Brain Dump</a>
+      <a href="#examday" data-v="examday">Exam Day</a>
     </nav>
   </div>
 </header>

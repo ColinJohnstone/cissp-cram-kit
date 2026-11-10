@@ -72,6 +72,7 @@ const MODEL_ITEMS=MODELS.filter(m=>m.ord).map(m=>({id:"m:"+m.id,d:m.d,type:"orde
 const QS=[...QUESTIONS.map((q,i)=>({id:"q"+i,d:q[0],type:"single",q:q[1],ans:q[2][0],opts:q[2],ex:q[3]})),
   ...ADVANCED.map((a,i)=>a.type==="multi"?{id:"a"+i,d:a.d,type:"multi",q:a.q,opts:[...a.correct,...a.wrong],correct:a.correct,ex:a.ex}:{id:"a"+i,d:a.d,type:a.type,q:a.q,pairs:a.pairs,ex:a.ex}),
   ...MANAGER.map((m,i)=>({id:"g"+i,d:m[0],type:"single",best:true,q:m[1],ans:m[2][0],opts:m[2],ex:`${m[3]} Why not “${m[2][1]}”? ${m[4]}`})),
+  ...HOTSPOT.map((h,i)=>({id:"h"+i,d:h.d,type:"hot",dia:h.dia,q:h.q,ans:h.ans,ex:h.ex})),
   ...MODEL_ITEMS];
 
 /* ---------- confusable pairs ---------- */
@@ -152,9 +153,18 @@ function ansText(it){
   if(it.type==="multi")return it.correct.join(" · ");
   if(it.type==="order")return it.items.map((x,i)=>`${i+1}. ${x}`).join("  ");
   if(it.type==="match")return it.pairs.map(p=>`${p[0]} → ${p[1]}`).join(" · ");
+  if(it.type==="hot")return zoneLabel(it,it.ans);
   return it.ans;
 }
-function typeLabel(it){return it.type==="multi"?"Multi-select":it.type==="order"?"Put in order":it.type==="match"?"Matching":"";}
+const zoneLabel=(it,z)=>{const zz=DIAGRAMS[it.dia].zones.find(x=>x.id===z);return zz?zz.label:"(none)";};
+function diagramSVG(it){
+  const D=DIAGRAMS[it.dia];
+  return `<div class="hotwrap"><svg class="hot hot-${it.dia}" viewBox="${D.view}" role="group" aria-label="Diagram: click a zone">
+    ${D.links.map(l=>`<line x1="${l[0]}" y1="${l[1]}" x2="${l[2]}" y2="${l[3]}" class="hlink"/>`).join("")}
+    ${D.zones.map(z=>`<g class="hz" data-z="${z.id}" tabindex="0" role="button" aria-label="${esc(z.label)}"><rect x="${z.x}" y="${z.y}" width="${z.w}" height="${z.h}" rx="8"/><foreignObject x="${z.x+4}" y="${z.y+4}" width="${z.w-8}" height="${z.h-8}"><div xmlns="http://www.w3.org/1999/xhtml" class="hzl">${esc(z.label)}</div></foreignObject></g>`).join("")}
+  </svg></div>`;
+}
+function typeLabel(it){return it.type==="multi"?"Multi-select":it.type==="order"?"Put in order":it.type==="match"?"Matching":it.type==="hot"?"Hotspot":"";}
 function runQuiz(host,items,cfg){
   let i=0,right=0;const log=[];let timerId=null;const exam=cfg.exam;
   const end=exam?Date.now()+cfg.minutes*60000:0;
@@ -167,6 +177,7 @@ function runQuiz(host,items,cfg){
   function body(it){
     if(it.type==="single"||it.type==="multi")return `<div class="opts" role="${it.type==="multi"?"group":"radiogroup"}">${it.shuffled.map((o,k)=>`<button class="opt ${it.type==="multi"?"multi":""}" data-k="${k}" aria-pressed="false"><span class="k">${it.type==="multi"?'<span class="box"></span>':"ABCDEF"[k]}</span><span>${esc(o)}</span></button>`).join("")}</div>`;
     if(it.type==="order")return `<ol class="ordlist" id="ordlist">${it.cur.map((x,k)=>`<li data-k="${k}"><span class="ordtxt">${esc(x)}</span><span class="ordbtns"><button class="mv" data-dir="-1" data-k="${k}" aria-label="Move up" ${k===0?"disabled":""}>↑</button><button class="mv" data-dir="1" data-k="${k}" aria-label="Move down" ${k===it.cur.length-1?"disabled":""}>↓</button></span></li>`).join("")}</ol>`;
+    if(it.type==="hot")return diagramSVG(it);
     if(it.type==="match")return `<div class="matchgrid">${it.pairs.map((p,k)=>`<label class="mrow" for="m${k}"><span class="ml">${esc(p[0])}</span><select id="m${k}" data-k="${k}"><option value="">Choose…</option>${it.rights.map(r=>`<option>${esc(r)}</option>`).join("")}</select></label>`).join("")}</div>`;
   }
   function draw(){
@@ -197,6 +208,11 @@ function runQuiz(host,items,cfg){
       draw2bind(it);
       sub.onclick=()=>answer(it.cur.slice());
     }
+    if(it.type==="hot"){
+      const choose=g=>{it.pick=g.dataset.z;$$(".hz",host).forEach(x=>x.classList.toggle("picked",x===g));sub.disabled=false;};
+      $$(".hz",host).forEach(g=>{g.onclick=()=>choose(g);g.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();choose(g);}};});
+      sub.onclick=()=>{if(it.pick)answer(it.pick);};
+    }
     if(it.type==="match"){
       const upd=()=>{sub.disabled=$$("select",host).some(s=>!s.value);};
       $$("select",host).forEach(s=>s.onchange=upd);
@@ -212,12 +228,14 @@ function runQuiz(host,items,cfg){
     if(it.type==="multi")return given.length===it.correct.length&&given.every(g=>it.correct.includes(g));
     if(it.type==="order")return given.join("|")===it.items.join("|");
     if(it.type==="match")return given.every((g,k)=>g===it.pairs[k][1]);
+    if(it.type==="hot")return given===it.ans;
   }
   function givenText(it,given){
     if(it.type==="single")return given;
     if(it.type==="multi")return given.join(" · ")||"(none)";
     if(it.type==="order")return given.map((x,k)=>`${k+1}. ${x}`).join("  ");
     if(it.type==="match")return it.pairs.map((p,k)=>`${p[0]} → ${given[k]||"?"}`).join(" · ");
+    if(it.type==="hot")return zoneLabel(it,given);
   }
   function answer(given){
     const it=order[i];const ok=grade(it,given);if(ok)right++;
@@ -230,9 +248,10 @@ function runQuiz(host,items,cfg){
       $$(".opt",host).forEach(b=>{b.disabled=true;const t=it.shuffled[+b.dataset.k];if(good.includes(t))b.classList.add("right");else if(chosen.includes(t))b.classList.add("wrong");});
     }
     if(it.type==="order"){$$(".mv",host).forEach(b=>b.disabled=true);$$("#ordlist li",host).forEach((li,k)=>li.classList.add(it.cur[k]===it.items[k]?"right":"wrong"));}
+    if(it.type==="hot"){$$(".hz",host).forEach(g=>{g.onclick=null;g.onkeydown=null;g.classList.add("done");if(g.dataset.z===it.ans)g.classList.add("right");else if(g.dataset.z===given)g.classList.add("wrong");});}
     if(it.type==="match"){$$("select",host).forEach((s,k)=>{s.disabled=true;s.closest(".mrow").classList.add(s.value===it.pairs[k][1]?"right":"wrong");});}
     const sub=$("#submit",host);if(sub)sub.remove();
-    const showKey=it.type==="order"||it.type==="match"||(it.type==="multi"&&!ok);
+    const showKey=it.type==="order"||it.type==="match"||it.type==="hot"||(it.type==="multi"&&!ok);
     $("#fb",host).innerHTML=`<div class="explain"><b class="${ok?"ok":"no"}">${ok?"Correct.":"Not quite."}</b> ${showKey&&!ok?`<div style="margin:6px 0"><b>Answer:</b> ${esc(ansText(it))}</div>`:""}${esc(it.ex||"")}</div>
       <div class="row" style="margin-top:12px"><button class="btn" id="next">${i+1<order.length?"Next question →":"See results"}</button></div>`;
     const nb=$("#next",host);nb.focus();nb.onclick=()=>{i++;i<order.length?draw():finish(false);};
@@ -286,7 +305,7 @@ function buildPlan(){
   const deepTask=id=>L(`Deep dive D${id}: BEST/FIRST questions, smart review, flashcards`,"#smart");
   const drillFor=k=>({acr:L("Acronym drill: 15 questions, both directions","#drill-acr"),regs:L("Laws & bodies drill: 15 questions","#drill-body"),models:L("Models: “Test me” on 3 sequences","#models"),calc:L("Calculation drill: 10 problems (ALE, RTO, keys, backups)","#drill-calc"),keys:L("“Which key?” crypto drill: 10 questions","#drill-keys")}[k]);
   const drills=[...["acr","regs","models"].filter(k=>topics.has(k)),"calc","keys"];
-  const review=[L("Light review: mindset rules and commonly confused pairs","#acronyms"),L("Smart review: 2 rounds","#smart"),L("Flashcards marked “Again”, then stop early and sleep","#cards")];
+  const review=[L("Brain dump: write formulas, ports and models from memory","#dump"),L("Read the Exam Day checklist","#examday"),L("Light review: mindset rules and commonly confused pairs","#acronyms"),L("Smart review: 2 rounds","#smart"),L("Flashcards marked “Again”, then stop early and sleep","#cards")];
   const fullTest=L(`Practice Test: ${topics.has("tests")?150:100} questions, timed, one sitting`,"#exam");
   const halfTest=L("Practice Test: 50 questions, timed","#exam");
   const tasks=[...order.map(domTask),...focus.map(deepTask)];
@@ -395,10 +414,18 @@ V.plan=()=>{
      </div>
      <div class="mind"><h3>Think like a manager</h3><ol class="rules">${MINDSET.map(m=>`<li>${m}</li>`).join("")}</ol></div>
      ${onPages?`<div class="card"><h3>Share with a coworker</h3><p class="muted" style="font-size:14px;margin:0 0 10px">Everyone who opens the link gets their own setup and progress.</p><div class="row"><input class="sharebox" id="shareUrl" readonly value="${esc(shareUrl)}" aria-label="Link to share"><button class="btn ghost" id="copyLink">Copy link</button></div></div>`:""}
+     <div class="card"><h3>Move to another device</h3><p class="muted" style="font-size:14px;margin:0 0 10px">Your progress lives in this browser. Copy your progress code, then paste it into the site on your other device.</p>
+      <div class="row"><button class="btn ghost" id="pcCopy">Copy my progress code</button></div>
+      <div class="row" style="margin-top:10px"><input class="sharebox" id="pcIn" placeholder="Paste a progress code (starts with CCK1.)" aria-label="Paste a progress code"><button class="btn ghost" id="pcLoad">Load</button></div>
+      <p class="muted" id="pcMsg" style="font-size:13px;margin:8px 0 0" role="status"></p></div>
      <div class="card"><h3>Reset</h3><p class="muted" style="font-size:14px;margin:0 0 10px">Clears your quiz history, practice tests and retired flashcards. Your setup stays.</p><div class="row" id="resetRow"><button class="btn ghost" id="resetBtn">Reset my progress</button></div></div>
     </div>
    </div>
   </div>`;
+  $("#pcCopy").onclick=()=>{const code=progressCode();const msg=$("#pcMsg");
+    const fallback=()=>{$("#pcIn").value=code;$("#pcIn").select();msg.textContent="Couldn't copy automatically. The code is selected in the box; copy it from there.";};
+    try{navigator.clipboard.writeText(code).then(()=>msg.textContent="Copied. Paste it into this site on your other device.",fallback);}catch(e){fallback();}};
+  $("#pcLoad").onclick=()=>{const msg=$("#pcMsg");try{loadProgressCode($("#pcIn").value);countdown();V.plan();$("#pcMsg").textContent="Progress loaded.";}catch(e){msg.textContent=e.message.startsWith("That")||e.message.startsWith("The code")?e.message:"That code couldn't be read. Copy the whole code and try again.";}};
   const ed=()=>openSetup(false);$("#editPlan").onclick=ed;const ad=$("#addDate");if(ad)ad.onclick=ed;
   const cp=$("#copyLink");if(cp)cp.onclick=()=>{const done=()=>{cp.textContent="Copied";setTimeout(()=>cp.textContent="Copy link",1600);};
     try{navigator.clipboard.writeText(shareUrl).then(done,()=>{$("#shareUrl").select();});}catch(e){$("#shareUrl").select();}};
@@ -600,8 +627,8 @@ V.drill=()=>{
 
 /* ---------- domain quiz ---------- */
 let quizD=1,quizT="all";
-const QTYPES=[["all","All types"],["best","BEST / FIRST"],["single","Multiple choice"],["multi","Multi-select"],["dnd","Order & match"]];
-const typeOK=(q,t)=>t==="all"||(t==="dnd"?(q.type==="order"||q.type==="match"):t==="best"?!!q.best:q.type===t);
+const QTYPES=[["all","All types"],["best","BEST / FIRST"],["single","Multiple choice"],["multi","Multi-select"],["dnd","Order, match & hotspot"]];
+const typeOK=(q,t)=>t==="all"||(t==="dnd"?(q.type==="order"||q.type==="match"||q.type==="hot"):t==="best"?!!q.best:q.type===t);
 V.quiz=()=>{
   const missN=QS.filter(q=>stat(q.id)[1]>stat(q.id)[0]).length;
   const cnt=t=>QS.filter(q=>typeOK(q,t)).length;
@@ -757,6 +784,103 @@ document.addEventListener("keydown",e=>{
   else if(e.key==="2"){const b=$("#fgot");if(b)b.click();}
 });
 
+/* ---------- brain dump ---------- */
+const STOP=new Set(["the","and","for","with","from","only","each","any","its","all","into","then","your","layer"]);
+const keyOf=l=>{const base=l.replace(/^\s*\d+\s*[—-]\s*/,"").split(/\s+—|\s*\(/)[0].toLowerCase().replace(/[^a-z0-9/ -]/g," ");const w=base.split(/[\s/]+/).filter(x=>x.length>=3&&!STOP.has(x));return [(w.length?w:[base.trim()]).join("|")];};
+const KEYOVR={eal:[["functionally"],["structurally"],["checked"],["reviewed"],["semiformally designed"],["semiformally verified"],["formally verified"]],fire:[["combustible"],["liquid"],["electric"],["metal"],["cook"]],vol:[["register"],["ram"],["temp"],["disk"],["remote"],["archiv"]],cmmi:[["initial"],["managed"],["defined"],["quantitative"],["optimiz"]],blpbiba:[["read up"],["write down"],["read down"],["write up"]],killchain:[["recon"],["weapon"],["deliver"],["exploit"],["install"],["command"],["action"]]};
+const PORTS=[["20/21","FTP"],["22","SSH"],["23","Telnet"],["25","SMTP"],["49","TACACS"],["53","DNS"],["67/68","DHCP"],["80","HTTP"],["88","Kerberos"],["110","POP3"],["123","NTP"],["143","IMAP"],["161","SNMP"],["389","LDAP"],["443","HTTPS"],["445","SMB"],["500","IKE"],["514","Syslog"],["636","LDAPS"],["1812","RADIUS"],["3389","RDP"]];
+const DUMPS=[
+ {id:"formulas",title:"Risk and recovery formulas",ord:false,items:[["SLE = AV × EF",["sle","av","ef"]],["ALE = SLE × ARO",["ale","aro"]],["Safeguard value = ALE before − ALE after − annual cost",["cost"]],["RTO + WRT ≤ MTD",["rto","wrt","mtd"]],["Availability = MTBF ÷ (MTBF + MTTR)",["mtbf","mttr"]],["Symmetric keys = n(n−1)/2",["n(n-1)/2"]],["Asymmetric keys = 2n",["2n"]]]},
+ {id:"ports",title:"Key ports (port and service)",ord:false,items:PORTS.map(p=>[`${p[0]} ${p[1]}`,[p[0].split("/")[0],p[1].toLowerCase()]])},
+ ...["osi","rmf","csf","bcp","irc","ir61","vol","drtest","eal","cmmi","killchain","ethics","policy","fire","sanit","classgov","pentest","sdlc","blpbiba"].map(id=>{const m=MODELS.find(x=>x.id===id);
+   return {id,title:m.name,ord:m.ord,mn:m.mn,items:m.steps.map((s,i)=>[s[0]+(s[1]?` — ${s[1]}`:""),KEYOVR[id]?KEYOVR[id][i]:keyOf(s[0])])};}),
+];
+const normT=s=>s.toLowerCase().replace(/[−–—]/g,"-").replace(/×/g,"x");
+function checkDump(d,text){
+  const t=normT(text),tn=t.replace(/\s+/g,"");
+  const find=k=>{const kk=normT(k);if(kk.includes("("))return tn.indexOf(kk.replace(/\s+/g,""));const ps=kk.split("|").map(a=>t.search(new RegExp("(^|[^a-z0-9])"+a.replace(/[.*+?^${}()[\]\\]/g,"\\$&")))).filter(x=>x>=0);return ps.length?ps[0]:-1;};
+  const res=d.items.map(([label,keys])=>{const pos=keys.map(find);
+    return {label,found:pos.every(p=>p>=0),at:Math.max(...pos)};});
+  const got=res.filter(r=>r.found);let inOrder=true;for(let i=1;i<got.length;i++)if(got[i].at<got[i-1].at)inOrder=false;
+  return {res,score:got.length,inOrder};
+}
+S.dump=S.dump||{};
+let dumpTimer=null;
+V.dump=()=>{
+  app.innerHTML=`<div class="stack">
+   <div><h2>Brain Dump</h2><p class="lede">Many candidates write out formulas and sequences on the test centre's note board as soon as the exam starts. Practise doing it from memory: type each one, then <b>Check</b> to see what you got, and whether it's in order.</p>
+   <div class="row"><button class="btn" id="dumpTimer">Start a 10-minute timed dump</button><span class="timer" id="dumpClock" hidden></span><span style="flex:1"></span><button class="chip" id="dumpClear">Clear all my answers</button></div></div>
+   <div class="dgrid">${DUMPS.map(d=>`<section class="dumpc" id="dump-${d.id}"><h3>${esc(d.title)}</h3>
+     <textarea id="dt-${d.id}" rows="${Math.min(8,Math.max(4,d.items.length))}" placeholder="${d.ord?"One per line, in order…":"One per line…"}" aria-label="${esc(d.title)}">${esc(S.dump[d.id]||"")}</textarea>
+     <div class="row" style="margin-top:8px"><button class="btn ghost" data-check="${d.id}">Check</button><button class="chip" data-show="${d.id}">Show answer</button></div>
+     <div class="dres" id="dr-${d.id}"></div></section>`).join("")}</div></div>`;
+  DUMPS.forEach(d=>{const ta=$("#dt-"+d.id);ta.oninput=()=>{S.dump[d.id]=ta.value;save();};});
+  $$("[data-check]",app).forEach(b=>b.onclick=()=>{const d=DUMPS.find(x=>x.id===b.dataset.check);const r=checkDump(d,$("#dt-"+d.id).value);
+    $("#dr-"+d.id).innerHTML=`<div class="tnum" style="margin:10px 0 6px">${r.score} / ${d.items.length}${d.ord&&r.score>1?(r.inOrder?" · in order":" · <span style='color:var(--bad)'>order is off</span>"):""}</div><ul class="dlist">${r.res.map(x=>`<li class="${x.found?"ok":"miss"}">${x.found?"✓":"✗"} ${esc(x.label)}</li>`).join("")}</ul>${d.mn?`<p class="muted" style="font-size:13px;margin:6px 0 0">Mnemonic: ${esc(d.mn)}</p>`:""}`;});
+  $$("[data-show]",app).forEach(b=>b.onclick=()=>{const d=DUMPS.find(x=>x.id===b.dataset.show);
+    $("#dr-"+d.id).innerHTML=`<${d.ord?"ol":"ul"} class="dlist ans">${d.items.map(x=>`<li>${esc(x[0])}</li>`).join("")}</${d.ord?"ol":"ul"}>${d.mn?`<p class="muted" style="font-size:13px;margin:6px 0 0">Mnemonic: ${esc(d.mn)}</p>`:""}`;});
+  $("#dumpClear").onclick=()=>{const c=$("#dumpClear");c.outerHTML=`<span style="font-size:14px">Clear everything you've typed?</span><button class="chip" id="dcy">Yes</button><button class="chip" id="dcn">No</button>`;$("#dcy").onclick=()=>{S.dump={};save();V.dump();};$("#dcn").onclick=()=>V.dump();};
+  $("#dumpTimer").onclick=()=>{clearInterval(dumpTimer);const end=Date.now()+600000;const el=$("#dumpClock");el.hidden=false;
+    const tick=()=>{const l=Math.max(0,end-Date.now());el.textContent=`${Math.floor(l/60000)}:${String(Math.floor(l%60000/1000)).padStart(2,"0")}`;el.classList.toggle("warn",l<60000);if(!l){clearInterval(dumpTimer);el.textContent="Time's up — check your answers";}};tick();dumpTimer=setInterval(tick,1000);};
+};
+
+/* ---------- exam day & resources ---------- */
+const LINKS=[
+ ["Official","ISC2 CISSP exam outline","https://www.isc2.org/certifications/cissp/cissp-exam-outline","Domains and weights; the source of truth for what's tested."],
+ ["Official","ISC2 exam day guide","https://www.isc2.org/exams/exam-day","Check-in, ID, breaks and test centre rules. Read this the week of your exam."],
+ ["Official","ISC2 CISSP certification page","https://www.isc2.org/certifications/cissp","Experience requirements, endorsement and maintenance."],
+ ["Video","Destination Certification MindMaps (free)","https://destcert.com/cissp-mindmaps/","30 short videos that map each domain; great for a final pass."],
+ ["Video","Destination Certification on YouTube","https://www.youtube.com/c/DestinationCertification/","The MindMaps plus exam-strategy videos."],
+ ["Video","CISSP Exam Cram — Pete Zerger","https://www.youtube.com/results?search_query=CISSP+Exam+Cram+full+course+Inside+Cloud+and+Security","Full-course cram on the Inside Cloud and Security channel (opens a YouTube search)."],
+ ["Video","“Why you WILL pass the CISSP” — Kelly Handerhan","https://www.youtube.com/results?search_query=Kelly+Handerhan+why+you+will+pass+the+CISSP","The classic manager-mindset talk (opens a YouTube search)."],
+ ["Podcast","Kelly Handerhan on the Cybrary Podcast","https://www.cybrary.it/podcast/a-humanizing-approach-to-passing-the-cissp-exam-with-kelly-handerhan-the-cybrary-podcast-ep-69","Mindset and approach to the exam."],
+ ["Community","r/cissp","https://www.reddit.com/r/cissp/","Recent pass/fail write-ups; useful for what the current exam feels like."],
+ ["Reference","OWASP Top 10:2025","https://top10.owasp.org/2025/","Current web application risk list."],
+ ["Reference","NIST Cybersecurity Framework 2.0","https://www.nist.gov/cyberframework","Govern, Identify, Protect, Detect, Respond, Recover."],
+];
+V.examday=()=>{
+  const n=daysLeft();
+  app.innerHTML=`<div class="stack">
+   <div><h2>Exam Day</h2><p class="lede">What to expect at the test centre and after you pass. Rules change, so confirm the details on ISC2's exam day page and in your Pearson VUE confirmation email${n!=null&&n>=0&&n<=7?" this week":""}.</p></div>
+   <div class="grid2">
+    <div class="card"><h3>The week before</h3><ul class="bl">
+     <li>Make sure the name on your Pearson VUE booking <b>exactly</b> matches your ID. Third-party guides say mismatches can't be fixed on the day.</li>
+     <li>Check your ID requirements. Guides commonly report ISC2 asks for two IDs: a primary with photo and signature, and a secondary with signature. Confirm on ISC2's page.</li>
+     <li>Know the route and parking; plan to arrive about 30 minutes early.</li>
+     <li>Stop heavy studying the evening before. Sleep beats one more practice test.</li></ul></div>
+    <div class="card"><h3>At the test centre</h3><ul class="bl">
+     <li>Expect check-in with ID, photo, and usually a palm-vein scan. Phones, watches and bags go in a locker.</li>
+     <li>You'll get an erasable note board and marker. This is where a brain dump goes.</li>
+     <li>Reports say breaks are allowed but <b>the clock keeps running</b>, and you can't leave the building.</li></ul></div>
+    <div class="card"><h3>During the exam</h3><ul class="bl">
+     <li>CAT: 100–150 questions in 3 hours, including 25 unscored. It can stop at any point from question 100; stopping early doesn't mean you failed.</li>
+     <li>No going back. Pick the best answer, commit, move on.</li>
+     <li>Pace: about 1 minute per question leaves a buffer. Glance at the clock every 25 questions.</li>
+     <li>Read the last sentence first: FIRST, BEST, MOST, LEAST decide the answer.</li>
+     <li>Think like a manager: people first, then risk, policy and process.</li></ul></div>
+    <div class="card"><h3>After the exam</h3><ul class="bl">
+     <li>You get a printed unofficial result at check-out. Passing shows no score; failing shows domain-level feedback.</li>
+     <li>If you need a retake, guides report waits of 30 days after the first attempt, 60 after the second and 90 after that, with up to 4 attempts in 12 months.</li></ul></div>
+    <div class="card"><h3>After you pass</h3><ul class="bl">
+     <li><b>Endorsement:</b> submit within 9 months of your exam date, endorsed by an ISC2-certified member in good standing.</li>
+     <li><b>Experience:</b> 5 years of paid work in at least two of the eight domains; a degree or approved credential can waive one year.</li>
+     <li><b>Not enough experience yet?</b> You become an Associate of ISC2 and have 6 years to earn it.</li>
+     <li><b>Keeping it:</b> 120 CPE credits per 3-year cycle (about 40 a year recommended), plus an annual maintenance fee. Check the current fee with ISC2.</li></ul></div>
+   </div>
+   <div class="card"><h3>Resources</h3><p class="muted" style="font-size:14px;margin:0 0 12px">Free material people credit in recent pass write-ups. Links open in a new tab.</p>
+    <div class="links">${LINKS.map(l=>`<a class="lnk" href="${l[2]}" target="_blank" rel="noopener"><span class="tag">${esc(l[0])}</span><b>${esc(l[1])}</b><span class="muted">${esc(l[3])}</span></a>`).join("")}</div></div>
+  </div>`;
+};
+
+/* ---------- progress code (move between devices) ---------- */
+function progressCode(){return "CCK1."+btoa(unescape(encodeURIComponent(JSON.stringify(S))));}
+function loadProgressCode(code){
+  const c=code.trim();if(!c.startsWith("CCK1."))throw new Error("That doesn't look like a progress code. It should start with CCK1.");
+  const obj=JSON.parse(decodeURIComponent(escape(atob(c.slice(5)))));
+  if(typeof obj!=="object"||!obj.q)throw new Error("The code is incomplete. Copy the whole code and try again.");
+  S=Object.assign({q:{},cards:{},exams:[],drill:{},dump:{}},obj);save();applySkin(S.skin);
+}
+
 /* ---------- global search ---------- */
 let INDEX=null;
 function buildIndex(){
@@ -787,6 +911,7 @@ function route(){
   const dm=v.match(/^drill-(\w+)$/);if(dm){drillState.mode=dm[1];v="drill";}
   currentView=V[v]?v:"plan";
   if(stopActive){stopActive();stopActive=null;}
+  clearInterval(dumpTimer);
   const gs=$("#gsearch");if(gs.value){gs.value="";}
   $$("#tabs a").forEach(a=>a.classList.toggle("on",a.dataset.v===currentView));
   const t=$(`#tabs a[data-v="${currentView}"]`);if(t)t.scrollIntoView({block:"nearest",inline:"nearest"});
