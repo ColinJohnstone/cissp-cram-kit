@@ -2,7 +2,8 @@
 
 A single-page study site for the CISSP exam (ISC2 outline effective April 15, 2024).
 
-- **Plan** – day-by-day cram schedule, exam facts, domain mastery, "think like a manager" rules
+- **Setup** – first visit asks for a name, exam date and focus areas (editable any time)
+- **Plan** – study plan generated from your exam date and focus areas (daily, or weekly if 3+ weeks out), domain mastery, "think like a manager" rules
 - **Cheat Sheet** – highest-yield facts for all 8 domains, plus formulas and memory aids
 - **Acronyms** – ~420 acronyms tagged by domain, with commonly confused pairs
 - **Laws & Bodies** – regulators, laws, standards, who enforces what, breach-notification clocks
@@ -14,7 +15,7 @@ A single-page study site for the CISSP exam (ISC2 outline effective April 15, 20
 
 ## Progress
 
-Quiz results, practice-test history and retired flashcards are saved in the browser's
+Your setup, quiz results, practice-test history and retired flashcards are saved in the browser's
 `localStorage` under the key `cissp-cram-v1`. Nothing is sent anywhere. Progress is per
 browser and per site, so a phone and a laptop each keep their own.
 

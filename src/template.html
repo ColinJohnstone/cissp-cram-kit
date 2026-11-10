@@ -176,6 +176,30 @@ table.osi td{font-size:13px}
 .res{padding:12px 0;border-bottom:1px solid var(--line);font-size:15px;min-width:0}
 .res .tag{font-size:12px;color:var(--ink-3)}
 .empty{padding:28px;text-align:center;color:var(--ink-3);border:1px dashed var(--line-2);border-radius:10px;font-size:14px}
+
+/* setup dialog */
+.setupbtn{font:inherit;font-size:13px;color:var(--ink-2);background:transparent;border:1px solid var(--line);border-radius:999px;padding:3px 10px;cursor:pointer;white-space:nowrap}
+.setupbtn:hover{color:var(--ink);border-color:var(--line-2)}
+.ob{position:fixed;inset:0;z-index:50;background:color-mix(in srgb,var(--bg) 70%,transparent);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:grid;place-items:center;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));overflow:auto}
+.obbox{width:min(560px,100%);background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:22px;max-height:100%;overflow:auto}
+.obbox h2{font-size:28px}
+.obstep{font-size:12px;color:var(--ink-3);margin:0 0 6px}
+.field{display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:500}
+.field input{font:inherit;font-size:16px;font-weight:400;padding:10px 12px;border-radius:8px;border:1px solid var(--line-2);background:var(--bg);color:var(--ink);width:100%;max-width:340px}
+.field input:focus{outline:none;border-color:var(--accent)}
+.checks{display:flex;flex-direction:column;gap:2px}
+.check{display:flex;gap:10px;align-items:flex-start;padding:7px 4px;border-radius:6px;cursor:pointer;font-size:14.5px}
+.check:hover{background:var(--surface-2)}
+.check input{margin-top:4px;accent-color:var(--accent);width:16px;height:16px;flex:0 0 auto}
+.obnav{border-top:1px solid var(--line);padding-top:18px}
+.obdots{display:flex;gap:6px;margin-right:6px}
+.obdots i{width:6px;height:6px;border-radius:50%;background:var(--line-2)}
+.obdots i.on{background:var(--ink)}
+.plink{color:inherit;text-decoration:none;border-bottom:1px solid var(--line-2)}
+.plink:hover{color:var(--accent);border-bottom-color:var(--accent)}
+.focuspill{font-size:11px;color:var(--accent);border:1px solid currentColor;border-radius:999px;padding:0 6px;margin-left:4px}
+.sharebox{font-family:var(--mono);font-size:13px;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);flex:1 1 220px;min-width:0}
+@media (max-width:600px){.obbox{padding:20px}.obbox h2{font-size:23px}}
 @media (max-width:600px){
   main{padding-block:28px 80px}
   .day{grid-template-columns:1fr;gap:4px}
@@ -193,7 +217,7 @@ table.osi td{font-size:13px}
   <div class="wrap">
     <div class="brand">
       <h1><span class="tagbox">CISSP</span>Cram Kit</h1>
-      <span class="count" id="countdown"></span>
+      <span class="count" id="countdown"></span><button class="setupbtn" id="setupBtn">Edit setup</button>
       <span class="spacer"></span>
       <div class="search"><input id="gsearch" type="search" placeholder="Look up anything: OCSP, Biba, HIPAA, 800-88…" aria-label="Search everything"></div>
     </div>

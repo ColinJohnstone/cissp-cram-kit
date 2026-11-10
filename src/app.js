@@ -7,7 +7,6 @@ const strip=s=>String(s).replace(/<[^>]+>/g,"");
 const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
 const sample=(a,n)=>shuffle(a).slice(0,n);
 const app=$("#app");
-const EXAM_DATE=new Date(2026,10,16,9,0,0);
 const DNAME=Object.fromEntries(DOMAINS.map(d=>[d.id,d.name]));
 
 /* ---------- storage (per-viewer convenience) ---------- */
@@ -109,10 +108,6 @@ function domChips(sel,opts={}){
   DOMAINS.forEach(d=>{h+=`<button class="chip ${sel===d.id?"on":""}" data-dom="${d.id}">D${d.id} ${d.code}<span class="w">${d.w}%</span></button>`;});
   if(opts.extra)h+=opts.extra;
   return `<div class="chips">${h}</div>`;
-}
-function countdown(){
-  const now=new Date();const days=Math.ceil((new Date(2026,10,16)-new Date(now.getFullYear(),now.getMonth(),now.getDate()))/864e5);
-  $("#countdown").textContent=days>1?`${days} days to exam · Mon Nov 16`:days===1?"Exam tomorrow":days===0?"Exam day":"";
 }
 
 /* ---------- quiz engine ---------- */
@@ -235,43 +230,153 @@ let stopActive=null;
 
 /* ---------- views ---------- */
 const V={};
+/* ---------- profile, plan generator, setup ---------- */
+const TOPICS=[["acr","Acronyms","#acronyms"],["regs","Laws, regulations & bodies","#regs"],["models","Models & sequences (OSI, RMF, IR…)","#models"],["tests","Timed practice tests","#exam"]];
+const prof=()=>S.profile||{};
+function examDate(){const p=prof();if(!p.date)return null;const [y,m,d]=p.date.split("-").map(Number);return new Date(y,m-1,d);}
+function today0(){const t=new Date();return new Date(t.getFullYear(),t.getMonth(),t.getDate());}
+function daysLeft(){const e=examDate();return e?Math.round((e-today0())/864e5):null;}
+const fmt=(d,o)=>d.toLocaleDateString(undefined,o||{weekday:"short",month:"short",day:"numeric"});
+const addDays=(d,n)=>new Date(d.getFullYear(),d.getMonth(),d.getDate()+n);
+const L=(t,h)=>({t,h});
+function buildPlan(){
+  const n=daysLeft();if(n==null)return null;
+  const p=prof();const focus=(p.focus||[]).slice().sort((a,b)=>a-b);const topics=new Set(p.topics||[]);
+  const t0=today0();const examItems=[L("Read the “Think like a manager” rules once at breakfast","#plan"),L("Bring government ID and arrive 30 minutes early",""),L("About 1 minute per question. It's forward-only, so commit and move on","")];
+  if(n<0)return {past:true};
+  if(n===0)return {mode:"day",rows:[{label:fmt(t0),date:t0,items:examItems,exam:true,today:true}]};
+  const order=[...focus,...DOMAINS.map(d=>d.id).filter(id=>!focus.includes(id)).sort((a,b)=>DOMAINS[b-1].w-DOMAINS[a-1].w)];
+  const domTask=id=>L(`D${id} ${DNAME[id]}: cheat sheet, then a 10-question quiz${focus.includes(id)?" (focus)":""}`,"#cheat");
+  const deepTask=id=>L(`Deep dive D${id}: quiz again, retry misses, flashcards`,"#quiz");
+  const drillFor=k=>({acr:L("Acronym drill: 15 questions, both directions","#drill"),regs:L("Laws & bodies drill: 15 questions","#drill"),models:L("Models: “Test me” on 3 sequences","#models")}[k]);
+  const drills=["acr","regs","models"].filter(k=>topics.has(k));
+  const review=[L("Light review: mindset rules and commonly confused pairs","#acronyms"),L("Domain Quiz → “My misses” only","#quiz"),L("Flashcards marked “Again”, then stop early and sleep","#cards")];
+  const fullTest=L(`Practice Test: ${topics.has("tests")?150:100} questions, timed, one sitting`,"#exam");
+  const halfTest=L("Practice Test: 50 questions, timed","#exam");
+  const tasks=[...order.map(domTask),...focus.map(deepTask)];
+  if(n<=21){
+    const rows=Array.from({length:n},(_,i)=>({date:addDays(t0,i),items:[]}));
+    rows[n-1].items.push(...review);
+    if(n===1){rows[0].items.unshift(L(`Skim the cheat sheet${focus.length?` for D${focus.join(", D")}`:""}`,"#cheat"));}
+    else{
+      if(n>=3)rows[n-2].items.push(fullTest);
+      const avail=[...Array(n>=3?n-2:n-1).keys()];
+      if(n===2){rows[0].items.push(L("Skim every domain's cheat sheet, focus domains first","#cheat"),halfTest);}
+      else{
+        tasks.forEach((t,i)=>rows[avail[Math.floor(i*avail.length/tasks.length)]].items.push(t));
+        if(n>=7)rows[Math.floor((n-2)/2)].items.push(halfTest);
+        if(topics.has("tests")&&n>=10)for(let i=3;i<n-3;i+=4)if(!rows[i].items.includes(halfTest))rows[i].items.push(L("Practice Test: 25-question sprint","#exam"));
+        avail.forEach((i,k)=>{if(drills.length)rows[i].items.push(drillFor(drills[k%drills.length]));});
+      }
+    }
+    rows.forEach((r,i)=>{r.label=fmt(r.date);r.today=i===0;});
+    rows.push({date:examDate(),label:fmt(examDate()),items:examItems,exam:true});
+    return {mode:"day",rows};
+  }
+  // week mode
+  const W=Math.ceil(n/7);const rows=Array.from({length:W},(_,w)=>({date:addDays(t0,w*7),items:[]}));
+  const studyW=Math.max(1,W-1);
+  tasks.forEach((t,i)=>rows[Math.floor(i*studyW/tasks.length)].items.push(t));
+  rows.slice(0,studyW).forEach((r,k)=>{if(drills.length)r.items.push({...drillFor(drills[k%drills.length]),t:drillFor(drills[k%drills.length]).t.replace(/^/,"Every other day: ")});});
+  if(W>=3)rows[Math.floor(studyW/2)].items.push(halfTest);
+  rows[W-1].items.push(fullTest,L("Retry misses from the practice test, by domain","#quiz"),...review);
+  rows.forEach((r,w)=>{r.label=`Week ${w+1}`;r.sub=`from ${fmt(r.date,{month:"short",day:"numeric"})}`;r.today=w===0;});
+  rows.push({date:examDate(),label:fmt(examDate()),items:examItems,exam:true});
+  return {mode:"week",rows};
+}
+function countdown(){
+  const n=daysLeft();const p=prof();
+  $("#countdown").textContent=n==null?"No exam date set":n>1?`${n} days to exam · ${fmt(examDate())}`:n===1?"Exam tomorrow":n===0?"Exam day":"Exam date has passed";
+  $("#setupBtn").textContent=p.name?`${p.name} · Edit setup`:"Edit setup";
+}
+
+/* setup dialog */
+function openSetup(first){
+  const p=prof();let step=0;
+  const draft={name:p.name||"",date:p.date||"",focus:new Set(p.focus||[]),topics:new Set(p.topics||(first?["acr","regs","models","tests"]:[]))};
+  const ov=document.createElement("div");ov.className="ob";ov.setAttribute("role","dialog");ov.setAttribute("aria-modal","true");ov.setAttribute("aria-labelledby","obTitle");
+  document.body.appendChild(ov);const prevFocus=document.activeElement;
+  const minDate=(()=>{const t=today0();return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,"0")}-${String(t.getDate()).padStart(2,"0")}`;})();
+  function draw(){
+    const steps=[
+     ()=>`<p class="obstep">Step 1 of 3</p><h2 id="obTitle">${first?"Welcome to the CISSP Cram Kit":"Your setup"}</h2>
+       <p class="lede" style="margin-bottom:18px">A cheat sheet, acronym and regulator drills, quizzes and timed practice tests for the CISSP. Three quick questions and it builds a study plan around your exam date.</p>
+       <label class="field" for="obName"><span>What should we call you?</span><input id="obName" type="text" autocomplete="given-name" maxlength="40" placeholder="First name (optional)" value="${esc(draft.name)}"></label>`,
+     ()=>`<p class="obstep">Step 2 of 3</p><h2 id="obTitle">When is your exam?</h2>
+       <p class="lede" style="margin-bottom:18px">The plan spreads all 8 domains across the days you have left, with a full practice test near the end and a light day before.</p>
+       <label class="field" for="obDate"><span>Exam date</span><input id="obDate" type="date" min="${minDate}" value="${esc(draft.date)}"></label>
+       <p class="muted" style="font-size:13px;margin-top:10px">Not booked yet? Leave it blank. You can add it later from “Edit setup”.</p>`,
+     ()=>`<p class="obstep">Step 3 of 3</p><h2 id="obTitle">What do you want to focus on?</h2>
+       <p class="lede" style="margin-bottom:14px">Pick the domains you feel weakest in. They come first in your plan and get a second pass.</p>
+       <div class="checks">${DOMAINS.map(d=>`<label class="check"><input type="checkbox" data-f="${d.id}" ${draft.focus.has(d.id)?"checked":""}><span><b>D${d.id}</b> ${esc(d.name)} <span class="muted">${d.w}%</span></span></label>`).join("")}</div>
+       <h4 style="margin-top:18px">Also build in</h4>
+       <div class="checks">${TOPICS.map(t=>`<label class="check"><input type="checkbox" data-t="${t[0]}" ${draft.topics.has(t[0])?"checked":""}><span>${esc(t[1])}</span></label>`).join("")}</div>`
+    ];
+    ov.innerHTML=`<div class="obbox"><div class="obbody">${steps[step]()}</div>
+      <div class="row obnav">${step>0?`<button class="btn ghost" id="obBack">Back</button>`:first?`<button class="btn ghost" id="obSkip">Skip for now</button>`:`<button class="btn ghost" id="obCancel">Cancel</button>`}<span style="flex:1"></span><span class="obdots">${[0,1,2].map(i=>`<i class="${i===step?"on":""}"></i>`).join("")}</span><button class="btn" id="obNext">${step<2?"Next":"Build my plan"}</button></div></div>`;
+    const nm=$("#obName",ov);if(nm){nm.oninput=e=>draft.name=e.target.value.trim();nm.focus();nm.onkeydown=e=>{if(e.key==="Enter")$("#obNext",ov).click();};}
+    const dt=$("#obDate",ov);if(dt){dt.onchange=dt.oninput=e=>draft.date=e.target.value;dt.focus();}
+    $$("[data-f]",ov).forEach(c=>c.onchange=()=>{const id=+c.dataset.f;c.checked?draft.focus.add(id):draft.focus.delete(id);});
+    $$("[data-t]",ov).forEach(c=>c.onchange=()=>{c.checked?draft.topics.add(c.dataset.t):draft.topics.delete(c.dataset.t);});
+    if(step===2){const f=$("[data-f]",ov);if(f)f.focus();}
+    const b=$("#obBack",ov);if(b)b.onclick=()=>{step--;draw();};
+    const sk=$("#obSkip",ov);if(sk)sk.onclick=()=>finish(true);
+    const c=$("#obCancel",ov);if(c)c.onclick=close;
+    $("#obNext",ov).onclick=()=>{if(step<2){step++;draw();}else finish(false);};
+  }
+  function finish(skipped){
+    S.profile={name:draft.name,date:draft.date,focus:[...draft.focus].sort((a,b)=>a-b),topics:[...draft.topics],done:true};
+    if(S.profile.focus.length)quizD=S.profile.focus[0];
+    save();close();countdown();if(currentView==="plan")V.plan();else location.hash="#plan";
+  }
+  function close(){ov.remove();document.removeEventListener("keydown",esc_);if(prevFocus&&prevFocus.focus)prevFocus.focus();}
+  function esc_(e){if(e.key==="Escape"&&!first)close();}
+  document.addEventListener("keydown",esc_);
+  draw();
+}
 
 V.plan=()=>{
-  const today=new Date();const ymd=d=>d.getFullYear()*1e4+(d.getMonth()+1)*100+d.getDate();
-  const days=[
-   [new Date(2026,10,10),"Tue Nov 10",["Domain 1 cheat sheet (biggest at 16%) + Domain 1 quiz","Acronyms drill: Domains 1 & 2 (Acronym → meaning)","Laws & Bodies: read the 'who enforces what' and breach-clock tables"]],
-   [new Date(2026,10,11),"Wed Nov 11",["Domains 2 & 3 cheat sheets + quizzes","Crypto block in Domain 3 twice — keys, signatures, modes","Drill: Standards → topic (NIST SP numbers)"]],
-   [new Date(2026,10,12),"Thu Nov 12",["Domains 4 & 5 cheat sheets + quizzes","Ports list and OSI layers until automatic","Drill: Meaning → acronym, all domains"]],
-   [new Date(2026,10,13),"Fri Nov 13",["Domains 6 & 7 cheat sheets + quizzes","Practice Test: 50 questions, timed","Retry misses; flashcards on weakest domain"]],
-   [new Date(2026,10,14),"Sat Nov 14",["Domain 8 cheat sheet + quiz","Practice Test: 100 questions, timed, in one sitting","Drill: Bodies and Laws until 90%+"]],
-   [new Date(2026,10,15),"Sun Nov 15",["Light day: Mindset rules, confusable pairs, misses only","Flashcards: only cards marked 'Again'","Stop by early evening. Sleep."]],
-   [new Date(2026,10,16),"Mon Nov 16",["Exam. Read the mindset list once at breakfast","Bring government ID; arrive 30 min early","Pace ~1 min/question; forward-only, so commit and move on"]],
-  ];
-  const ex=S.exams.slice(0,5);
+  const p=prof();const n=daysLeft();const plan=buildPlan();const ex=S.exams.slice(0,5);
+  const focus=new Set(p.focus||[]);
+  const head=n==null?`${p.name?esc(p.name)+", let's":"Let's"} get you ready`:n<0?`${p.name?esc(p.name)+", your":"Your"} exam date has passed`:n===0?`${p.name?esc(p.name)+", it's":"It's"} exam day`:`${p.name?esc(p.name)+", ":""}${n} day${n===1?"":"s"} to go`;
+  const onPages=/github\.io$/.test(location.hostname);const shareUrl=location.origin+location.pathname;
+  const planHTML=!plan?`<div class="empty" style="text-align:left">Add your exam date to get a day-by-day plan. <button class="btn ghost" id="addDate" style="margin-left:8px">Add exam date</button></div>`
+    :plan.past?`<div class="empty" style="text-align:left">Hope it went well! Set a new date if you're retaking it. <button class="btn ghost" id="addDate" style="margin-left:8px">Edit setup</button></div>`
+    :`<div class="plan">${plan.rows.map(r=>`<div class="day ${r.today?"today":""} ${r.exam?"exam":""}"><div class="when"><b>${r.exam?"Exam":esc(r.label.split(",")[0])}</b>${r.exam?esc(r.label):r.sub?esc(r.sub):esc(r.label.split(",").slice(1).join(",")||"")}</div><ul>${r.items.map(x=>`<li>${x.h?`<a class="plink" href="${x.h}">${esc(x.t)}</a>`:esc(x.t)}</li>`).join("")}</ul></div>`).join("")}</div>`;
   app.innerHTML=`<div class="stack">
-   <div><h2>Six days to Monday</h2><p class="lede">Built from your study guide and its quick-review set, checked against the current ISC2 outline. Acronyms and regulators get their own tabs and drills. Your progress saves in this browser.</p></div>
+   <div><h2>${head}</h2><p class="lede">Built from a comprehensive CISSP study guide and its quick-review set, checked against the current ISC2 outline. Your setup and progress stay in this browser only.</p></div>
    <dl class="facts">${EXAMFACTS.map(f=>`<div><dt>${esc(f[0])}</dt><dd>${esc(f[1])}</dd></div>`).join("")}</dl>
    <div class="grid2">
-    <div class="card"><h3>Cram plan</h3><div class="plan">${days.map(d=>`<div class="day ${ymd(d[0])===ymd(today)?"today":""} ${d[1].startsWith("Mon")?"exam":""}"><div class="when"><b>${d[1].split(" ")[0]}</b>${d[1].split(" ").slice(1).join(" ")}</div><ul>${d[2].map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`).join("")}</div></div>
+    <div class="card"><div class="row" style="justify-content:space-between;margin-bottom:8px"><h3 style="margin:0">${plan&&plan.mode==="week"?"Weekly plan":"Study plan"}</h3><button class="chip" id="editPlan">Edit setup</button></div>
+     ${focus.size?`<p class="muted" style="font-size:13px;margin:0 0 12px">Focus: ${[...focus].map(id=>"D"+id+" "+DOMAINS[id-1].code).join(" · ")}</p>`:""}
+     ${planHTML}</div>
     <div class="stack">
      <div class="card"><h3>Domain mastery</h3><p class="muted" style="font-size:13px;margin:0 0 12px">From your quiz and practice-test answers.</p>
-      <div class="mast">${DOMAINS.map(d=>{const m=domainMastery(d.id);return `<span class="dnum">${d.id}</span><div><div style="font-size:13px;margin-bottom:3px">${esc(d.name)} <span class="muted">${d.w}%</span></div><div class="bar ${barClass(m.pct)}"><i style="width:${m.pct||0}%"></i></div></div><span class="tnum">${m.pct==null?"—":m.pct+"%"}<br>${m.seen}/${m.total} seen</span>`;}).join("")}</div>
+      <div class="mast">${DOMAINS.map(d=>{const m=domainMastery(d.id);return `<span class="dnum">${d.id}</span><div><div style="font-size:13px;margin-bottom:3px">${esc(d.name)} <span class="muted">${d.w}%</span>${focus.has(d.id)?` <span class="focuspill">focus</span>`:""}</div><div class="bar ${barClass(m.pct)}"><i style="width:${m.pct||0}%"></i></div></div><span class="tnum">${m.pct==null?"—":m.pct+"%"}<br>${m.seen}/${m.total} seen</span>`;}).join("")}</div>
       ${ex.length?`<h4 style="margin-top:16px">Recent practice tests</h4>${ex.map(e=>`<div class="tnum">${new Date(e.t).toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric"})} · ${e.right}/${e.n} · ${e.pct}%</div>`).join("")}`:""}
      </div>
      <div class="mind"><h3>Think like a manager</h3><ol class="rules">${MINDSET.map(m=>`<li>${m}</li>`).join("")}</ol></div>
+     ${onPages?`<div class="card"><h3>Share with a coworker</h3><p class="muted" style="font-size:14px;margin:0 0 10px">Everyone who opens the link gets their own setup and progress.</p><div class="row"><input class="sharebox" id="shareUrl" readonly value="${esc(shareUrl)}" aria-label="Link to share"><button class="btn ghost" id="copyLink">Copy link</button></div></div>`:""}
+     <div class="card"><h3>Reset</h3><p class="muted" style="font-size:14px;margin:0 0 10px">Clears your quiz history, practice tests and retired flashcards. Your setup stays.</p><div class="row" id="resetRow"><button class="btn ghost" id="resetBtn">Reset my progress</button></div></div>
     </div>
    </div>
   </div>`;
+  const ed=()=>openSetup(false);$("#editPlan").onclick=ed;const ad=$("#addDate");if(ad)ad.onclick=ed;
+  const cp=$("#copyLink");if(cp)cp.onclick=()=>{const done=()=>{cp.textContent="Copied";setTimeout(()=>cp.textContent="Copy link",1600);};
+    try{navigator.clipboard.writeText(shareUrl).then(done,()=>{$("#shareUrl").select();});}catch(e){$("#shareUrl").select();}};
+  $("#resetBtn").onclick=()=>{$("#resetRow").innerHTML=`<span style="font-size:14px">Clear all progress?</span><button class="btn" id="resetYes">Yes, reset</button><button class="btn ghost" id="resetNo">Keep it</button>`;
+    $("#resetYes").onclick=()=>{S.q={};S.cards={};S.exams=[];save();V.plan();};$("#resetNo").onclick=()=>V.plan();};
 };
+
 
 V.cheat=()=>{
   app.innerHTML=`<div class="stack">
-   <div><h2>Cheat Sheet</h2><p class="lede">The highest-yield facts per domain. Each domain also has your study set's formulas and memory aids, collapsed.</p>${domChips(0)}</div>
+   <div><h2>Cheat Sheet</h2><p class="lede">The highest-yield facts per domain. Each domain also has the study set's formulas and memory aids, collapsed.</p>${domChips(0)}</div>
    ${DOMAINS.map(d=>{const r=REV[d.id-1];return `<section class="dsec card" id="d${d.id}">
      <div class="dhead"><span class="dnum">${d.id}</span><h3 style="margin:0">${esc(d.name)}</h3><span class="wt">${d.w}% of exam</span></div>
      <div class="grid2">${CHEAT[d.id].map(b=>`<div class="blk"><h3>${esc(b[0])}</h3><ul>${b[1].map(x=>`<li>${x}</li>`).join("")}</ul></div>`).join("")}</div>
-     ${r&&r.formulas.length?`<details class="more"><summary>Formulas from your study set (${r.formulas.length})</summary><ul>${r.formulas.map(f=>`<li class="mono" style="font-size:13px">${esc(f)}</li>`).join("")}</ul></details>`:""}
-     ${r&&r.aids.length?`<details class="more"><summary>Memory aids from your study set (${r.aids.length})</summary><ul>${r.aids.map(f=>`<li>${esc(f)}</li>`).join("")}</ul></details>`:""}
+     ${r&&r.formulas.length?`<details class="more"><summary>Formulas from the study set (${r.formulas.length})</summary><ul>${r.formulas.map(f=>`<li class="mono" style="font-size:13px">${esc(f)}</li>`).join("")}</ul></details>`:""}
+     ${r&&r.aids.length?`<details class="more"><summary>Memory aids from the study set (${r.aids.length})</summary><ul>${r.aids.map(f=>`<li>${esc(f)}</li>`).join("")}</ul></details>`:""}
    </section>`;}).join("")}
   </div>`;
   $$(".chip[data-dom]",app).forEach(c=>c.onclick=()=>{const d=+c.dataset.dom;if(!d){window.scrollTo({top:0,behavior:"smooth"});return;}const el=$("#d"+d);if(el)el.scrollIntoView({behavior:"smooth"});});
@@ -552,7 +657,7 @@ function search(q){
   if(!INDEX)buildIndex();
   const ql=q.toLowerCase();
   const hits=INDEX.filter(x=>x.t.toLowerCase().includes(ql)).map(x=>({x,s:(x.w&&x.w.toLowerCase()===ql?0:x.w&&x.w.toLowerCase().startsWith(ql)?1:2)})).sort((a,b)=>a.s-b.s).slice(0,80);
-  app.innerHTML=`<div class="stack"><div><h2>Results for “${esc(q)}”</h2><p class="lede">${hits.length===80?"Top 80 matches":hits.length+" matches"} across acronyms, regulators, the cheat sheet and your study set. Clear the search box to go back.</p></div>
+  app.innerHTML=`<div class="stack"><div><h2>Results for “${esc(q)}”</h2><p class="lede">${hits.length===80?"Top 80 matches":hits.length+" matches"} across acronyms, regulators, the cheat sheet and the study set. Clear the search box to go back.</p></div>
    <div class="results">${hits.map(h=>`<div class="res"><div class="tag">${esc(h.x.tag)}</div>${hlHTML(h.x.h,q)}</div>`).join("")||`<div class="empty">Nothing found. Try a shorter term.</div>`}</div></div>`;
 }
 let st;
@@ -569,5 +674,8 @@ function route(){
   V[currentView]();window.scrollTo({top:0});
 }
 window.addEventListener("hashchange",route);
+if(S.profile&&S.profile.focus&&S.profile.focus.length)quizD=S.profile.focus[0];
+$("#setupBtn").onclick=()=>openSetup(false);
 countdown();route();
+if(!S.profile||!S.profile.done)openSetup(true);
 })();
