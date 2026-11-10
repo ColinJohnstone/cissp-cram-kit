@@ -112,7 +112,7 @@ function domChips(sel,opts={}){
 }
 function countdown(){
   const now=new Date();const days=Math.ceil((new Date(2026,10,16)-new Date(now.getFullYear(),now.getMonth(),now.getDate()))/864e5);
-  $("#countdown").textContent=days>1?`T-${days} days · exam Mon 16 Nov`:days===1?"T-1 · exam tomorrow":days===0?"T-0 · exam day":"";
+  $("#countdown").textContent=days>1?`${days} days to exam · Mon Nov 16`:days===1?"Exam tomorrow":days===0?"Exam day":"";
 }
 
 /* ---------- quiz engine ---------- */
@@ -249,7 +249,7 @@ V.plan=()=>{
   ];
   const ex=S.exams.slice(0,5);
   app.innerHTML=`<div class="stack">
-   <div><h2>Mission brief</h2><p class="lede">Built from your study guide and its quick-review set, checked against the current ISC2 outline. Acronyms and regulators get their own tabs and drills. Your progress saves in this browser.</p></div>
+   <div><h2>Six days to Monday</h2><p class="lede">Built from your study guide and its quick-review set, checked against the current ISC2 outline. Acronyms and regulators get their own tabs and drills. Your progress saves in this browser.</p></div>
    <dl class="facts">${EXAMFACTS.map(f=>`<div><dt>${esc(f[0])}</dt><dd>${esc(f[1])}</dd></div>`).join("")}</dl>
    <div class="grid2">
     <div class="card"><h3>Cram plan</h3><div class="plan">${days.map(d=>`<div class="day ${ymd(d[0])===ymd(today)?"today":""} ${d[1].startsWith("Mon")?"exam":""}"><div class="when"><b>${d[1].split(" ")[0]}</b>${d[1].split(" ").slice(1).join(" ")}</div><ul>${d[2].map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`).join("")}</div></div>
