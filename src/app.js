@@ -36,6 +36,7 @@ const REV=REVIEW.map((d,i)=>{
 const MODEL_ITEMS=MODELS.filter(m=>m.ord).map(m=>({id:"m:"+m.id,d:m.d,type:"order",q:`Put in order: ${m.name}`,items:m.steps.map(x=>x[0]),ex:`Mnemonic: ${m.mn}`}));
 const QS=[...QUESTIONS.map((q,i)=>({id:"q"+i,d:q[0],type:"single",q:q[1],ans:q[2][0],opts:q[2],ex:q[3]})),
   ...ADVANCED.map((a,i)=>a.type==="multi"?{id:"a"+i,d:a.d,type:"multi",q:a.q,opts:[...a.correct,...a.wrong],correct:a.correct,ex:a.ex}:{id:"a"+i,d:a.d,type:a.type,q:a.q,pairs:a.pairs,ex:a.ex}),
+  ...MANAGER.map((m,i)=>({id:"g"+i,d:m[0],type:"single",best:true,q:m[1],ans:m[2][0],opts:m[2],ex:`${m[3]} Why not “${m[2][1]}”? ${m[4]}`})),
   ...MODEL_ITEMS];
 
 /* ---------- confusable pairs ---------- */
@@ -247,10 +248,10 @@ function buildPlan(){
   if(n===0)return {mode:"day",rows:[{label:fmt(t0),date:t0,items:examItems,exam:true,today:true}]};
   const order=[...focus,...DOMAINS.map(d=>d.id).filter(id=>!focus.includes(id)).sort((a,b)=>DOMAINS[b-1].w-DOMAINS[a-1].w)];
   const domTask=id=>L(`D${id} ${DNAME[id]}: cheat sheet, then a 10-question quiz${focus.includes(id)?" (focus)":""}`,"#cheat");
-  const deepTask=id=>L(`Deep dive D${id}: quiz again, retry misses, flashcards`,"#quiz");
-  const drillFor=k=>({acr:L("Acronym drill: 15 questions, both directions","#drill"),regs:L("Laws & bodies drill: 15 questions","#drill"),models:L("Models: “Test me” on 3 sequences","#models")}[k]);
-  const drills=["acr","regs","models"].filter(k=>topics.has(k));
-  const review=[L("Light review: mindset rules and commonly confused pairs","#acronyms"),L("Domain Quiz → “My misses” only","#quiz"),L("Flashcards marked “Again”, then stop early and sleep","#cards")];
+  const deepTask=id=>L(`Deep dive D${id}: BEST/FIRST questions, smart review, flashcards`,"#smart");
+  const drillFor=k=>({acr:L("Acronym drill: 15 questions, both directions","#drill-acr"),regs:L("Laws & bodies drill: 15 questions","#drill-body"),models:L("Models: “Test me” on 3 sequences","#models"),calc:L("Calculation drill: 10 problems (ALE, RTO, keys, backups)","#drill-calc"),keys:L("“Which key?” crypto drill: 10 questions","#drill-keys")}[k]);
+  const drills=[...["acr","regs","models"].filter(k=>topics.has(k)),"calc","keys"];
+  const review=[L("Light review: mindset rules and commonly confused pairs","#acronyms"),L("Smart review: 2 rounds","#smart"),L("Flashcards marked “Again”, then stop early and sleep","#cards")];
   const fullTest=L(`Practice Test: ${topics.has("tests")?150:100} questions, timed, one sitting`,"#exam");
   const halfTest=L("Practice Test: 50 questions, timed","#exam");
   const tasks=[...order.map(domTask),...focus.map(deepTask)];
@@ -433,10 +434,53 @@ V.regs=()=>{
   $("#regdrill").onclick=()=>{drillState.mode="body";location.hash="#drill";};
 };
 
+/* ---------- generated calculation + "which key?" drills ---------- */
+const ri=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const money=v=>(v<0?"−":"")+"$"+Math.round(Math.abs(v)).toLocaleString("en-US");
+const num=v=>(Math.round(v*1000)/1000).toLocaleString("en-US");
+function uniq4(ans,cands,fmtf){const out=[ans];for(const c of cands){const f=fmtf(c);if(!out.includes(f))out.push(f);if(out.length===4)break;}let k=2;while(out.length<4){const f=fmtf(Math.abs(parseFloat(String(ans).replace(/[^0-9.]/g,"")))*k++);if(!out.includes(f))out.push(f);}return out;}
+const FREQ=[[2,"twice a year"],[1,"once a year"],[0.5,"once every 2 years"],[0.25,"once every 4 years"],[0.2,"once every 5 years"],[0.1,"once every 10 years"],[0.05,"once every 20 years"],[0.04,"once every 25 years"]];
+const CALC=[
+ ()=>{const AV=ri(4,80)*25000,EF=[10,20,25,40,50,75,100][ri(0,6)],f=FREQ[ri(0,7)];const SLE=AV*EF/100,ALE=SLE*f[0];
+   return {d:1,q:`A ${money(AV)} asset would lose ${EF}% of its value in an incident expected ${f[1]}. What is the ALE?`,ans:money(ALE),opts:uniq4(money(ALE),[SLE,AV*f[0],ALE*10,SLE*2],money),ex:`SLE = AV × EF = ${money(AV)} × ${EF/100} = ${money(SLE)}. ARO = ${f[0]}. ALE = SLE × ARO = ${money(ALE)}.`};},
+ ()=>{const AV=ri(4,80)*25000,EF=[10,20,25,40,50,75][ri(0,5)];const SLE=AV*EF/100;
+   return {d:1,q:`An asset is worth ${money(AV)}. A single incident would destroy ${EF}% of it. What is the SLE?`,ans:money(SLE),opts:uniq4(money(SLE),[AV,AV-SLE,SLE/10,SLE*2],money),ex:`SLE = AV × EF = ${money(AV)} × ${EF/100} = ${money(SLE)}.`};},
+ ()=>{const b=ri(4,40)*5000,a=Math.round(b*[0.1,0.2,0.25,0.4,0.5][ri(0,4)]),c=ri(2,30)*1000;const v=b-a-c;
+   return {d:1,q:`ALE is ${money(b)} today. A safeguard would cut it to ${money(a)} and costs ${money(c)} a year. What is the safeguard's annual value?`,ans:money(v),opts:uniq4(money(v),[b-a,b-c,b-a+c,a-c],money),ex:`Value = ALE before − ALE after − annual cost = ${money(b)} − ${money(a)} − ${money(c)} = ${money(v)}. ${v>0?"Positive, so it's worth doing.":"Negative, so it costs more than it saves."}`};},
+ ()=>{const n=[2,4,5,8,10,20,25,50][ri(0,7)];const ans=num(1/n);
+   return {d:1,q:`A flood is expected once every ${n} years. What is the ARO?`,ans,opts:uniq4(ans,[n,1/(2*n),10/n,n/100],num),ex:`ARO = 1 ÷ ${n} = ${ans} occurrences per year.`};},
+ ()=>{const M=[8,12,24,48,72][ri(0,4)],W=pick([1,2,4,6,8].filter(x=>x<M));const R=M-W;
+   return {d:1,q:`A business process has an MTD of ${M} hours. Verifying and resuming work after a restore takes ${W} hours. What is the maximum RTO?`,ans:`${R} hours`,opts:uniq4(`${R} hours`,[M+W,M,W,M/2],v=>`${v} hours`),ex:`RTO + WRT ≤ MTD, so RTO ≤ ${M} − ${W} = ${R} hours.`};},
+ ()=>{const F=[500,1000,2000,4000,5000][ri(0,4)],T=[2,4,5,10,20,25][ri(0,5)];const A=100*F/(F+T);const fm=v=>v.toFixed(2)+"%";
+   return {d:7,q:`A system has an MTBF of ${F.toLocaleString()} hours and an MTTR of ${T} hours. What is its availability?`,ans:fm(A),opts:uniq4(fm(A),[100*T/(F+T),100-T,100*T/F*10],fm),ex:`Availability = MTBF ÷ (MTBF + MTTR) = ${F} ÷ ${F+T} = ${fm(A)}.`};},
+ ()=>{const n=ri(4,60)*5;const sym=Math.random()<.5;const s=n*(n-1)/2,a=2*n;const ans=(sym?s:a).toLocaleString();
+   return {d:3,q:`${n} people must each be able to communicate privately with every other person. How many keys are needed with ${sym?"symmetric":"asymmetric"} cryptography?`,ans,opts:uniq4(ans,[sym?a:s,n*n,n*(n-1),n],v=>v.toLocaleString()),ex:`Symmetric: n(n−1)/2 = ${s.toLocaleString()}. Asymmetric: 2n = ${a.toLocaleString()} (a key pair each).`};},
+ ()=>{const days=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];const f=ri(2,6);const inc=Math.random()<.5;const need=inc?f:2;
+   return {d:7,q:`A full backup runs Sunday night and ${inc?"incremental":"differential"} backups run each of the other nights. The server fails ${days[f-1]} morning, before that night's backup. How many backups are needed to restore?`,ans:String(need),opts:uniq4(String(need),[inc?2:f,f+1,1,f-1],v=>String(v)),ex:inc?`Full + every incremental since: Sunday full + ${f-1} incremental${f-1===1?"":"s"} (Mon–${days[f-2].slice(0,3)}) = ${f}.`:`Full + only the latest differential = 2. Each differential holds everything since the full.`};},
+];
+const PAIRS_N=[["Alice","Bob"],["Priya","Sam"],["Jordan","Mei"],["Omar","Lena"],["Ravi","Chloe"]];
+function keyItem(){
+  const [A,B]=pick(PAIRS_N);const K=[`${A}'s public key`,`${A}'s private key`,`${B}'s public key`,`${B}'s private key`];
+  const S4=(ans)=>[ans,...K.filter(k=>k!==ans)];
+  const sc=[
+   ()=>({q:`${A} wants to send ${B} a message that only ${B} can read. Which key encrypts it?`,ans:K[2],opts:S4(K[2]),ex:`Confidentiality: encrypt with the recipient's public key; only ${B}'s private key can decrypt.`}),
+   ()=>({q:`${A} encrypted a message so only ${B} could read it. Which key does ${B} use to decrypt it?`,ans:K[3],opts:S4(K[3]),ex:`The recipient's private key decrypts what was encrypted with their public key.`}),
+   ()=>({q:`${A} digitally signs a contract before sending it to ${B}. Which key creates the signature?`,ans:K[1],opts:S4(K[1]),ex:`A signature is the message hash encrypted with the sender's private key, which only ${A} has. That's what gives non-repudiation.`}),
+   ()=>({q:`${B} receives a signed message from ${A}. Which key verifies the signature?`,ans:K[0],opts:S4(K[0]),ex:`Anyone can verify with the sender's public key.`}),
+   ()=>{const ans=`${A}'s private key and ${B}'s public key`;return {q:`${A} needs ${B} to know the message came from ${A} AND that only ${B} can read it. Which keys does ${A} use?`,ans,opts:[ans,`${A}'s public key and ${B}'s private key`,`${A}'s private key and ${B}'s private key`,`${B}'s public key only`],ex:`Sign with your own private key (origin, non-repudiation), then encrypt with the recipient's public key (confidentiality).`};},
+   ()=>({q:`${A} encrypts a large file with a random AES session key, using hybrid encryption to send it to ${B}. Which key protects the session key?`,ans:K[2],opts:S4(K[2]),ex:`Hybrid crypto: fast symmetric encryption for the data; the recipient's public key wraps the session key.`}),
+   ()=>{const C=["the CA's private key","the CA's public key",`${B}'s private key`,`${B}'s public key`];return {q:`A certificate authority issues ${B}'s certificate. Which key does the CA sign it with?`,ans:C[0],opts:C,ex:`The CA signs certificates with its private key; anyone holding the CA's public key (in the trust store) can verify them.`};},
+   ()=>{const C=["the CA's public key","the CA's private key",`${B}'s private key`,`${B}'s public key`];return {q:`${A}'s browser checks ${B}'s website certificate. Which key verifies the CA's signature on it?`,ans:C[0],opts:C,ex:`Browsers trust a root store of CA public keys and use them to verify certificate signatures.`};},
+   ()=>{const C=[`a secret key shared by ${A} and ${B}`,`${A}'s private key`,`${B}'s public key`,`the CA's public key`];return {q:`${A} and ${B} protect message integrity with an HMAC. Which key is used?`,ans:C[0],opts:C,ex:`HMAC uses a shared symmetric secret. Either party could have made it, so there's no non-repudiation.`};},
+   ()=>({q:`${B}'s private key was stolen. Which of ${B}'s properties is MOST directly lost?`,ans:"Confidentiality of messages sent to Bob, and trust in Bob's signatures".replace(/Bob/g,B),opts:["Confidentiality of messages sent to Bob, and trust in Bob's signatures".replace(/Bob/g,B),`Only the ability of ${A} to sign messages`,`Nothing, as long as ${B}'s public key is safe`,`Only availability of ${B}'s certificate`],ex:`The thief can decrypt messages meant for ${B} and forge ${B}'s signatures. Revoke the certificate immediately.`}),
+  ];
+  return {d:3,...pick(sc)(),tag:"Which key?"};
+}
+
 /* ---------- drills (generated) ---------- */
 let drillState={mode:"acr",d:0,n:15};
 const MODES=[
- ["acr","Acronym → meaning"],["rev","Meaning → acronym"],["body","Body → what it does"],["law","Description → law"],["std","Standard → topic"],["stdrev","Topic → standard"],["mix","Mixed regulatory"]
+ ["acr","Acronym → meaning"],["rev","Meaning → acronym"],["calc","Calculations"],["keys","Which key?"],["body","Body → what it does"],["law","Description → law"],["std","Standard → topic"],["stdrev","Topic → standard"],["mix","Mixed regulatory"]
 ];
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 const mainPart=f=>f.replace(/\s*\((?:or|also)[^)]*\)\s*$/i,"").trim();
@@ -497,7 +541,9 @@ function buildDrill(mode,d,n){
   if(mode==="std")sample(STANDARDS,n).forEach(b=>items.push(stdQ(b)));
   if(mode==="stdrev")sample(STANDARDS,n).forEach(b=>items.push(stdRevQ(b)));
   if(mode==="mix"){const all=[...BODIES.map(bodyQ),...LAWS.map(lawQ),...STANDARDS.map(stdRevQ),...ENFORCE.map(enfQ)];sample(all,n).forEach(x=>items.push(x));}
-  return items.filter(x=>x.opts.length===4);
+  if(mode==="calc")for(let i=0;i<n;i++)items.push({...CALC[i%CALC.length](),tag:"Calculation"});
+  if(mode==="keys")for(let i=0;i<n;i++)items.push(keyItem());
+  return (mode==="calc"?shuffle(items):items).filter(x=>x.opts.length===4);
 }
 V.drill=()=>{
   app.innerHTML=`<div class="stack">
@@ -517,12 +563,14 @@ V.drill=()=>{
 
 /* ---------- domain quiz ---------- */
 let quizD=1,quizT="all";
-const QTYPES=[["all","All types"],["single","Multiple choice"],["multi","Multi-select"],["dnd","Order & match"]];
+const QTYPES=[["all","All types"],["best","BEST / FIRST"],["single","Multiple choice"],["multi","Multi-select"],["dnd","Order & match"]];
+const typeOK=(q,t)=>t==="all"||(t==="dnd"?(q.type==="order"||q.type==="match"):t==="best"?!!q.best:q.type===t);
 V.quiz=()=>{
   const missN=QS.filter(q=>stat(q.id)[1]>stat(q.id)[0]).length;
-  const cnt=t=>QS.filter(q=>t==="all"||(t==="dnd"?(q.type==="order"||q.type==="match"):q.type===t)).length;
+  const cnt=t=>QS.filter(q=>typeOK(q,t)).length;
   app.innerHTML=`<div class="stack">
-   <div><h2>Domain Quiz</h2><p class="lede">${QS.length} items: scenario multiple choice, multi-select ("Choose TWO", "Select ALL that apply"), and drag-and-drop style ordering and matching. Explanation after each answer.</p>
+   <div><h2>Domain Quiz</h2><p class="lede">${QS.length} items: scenario multiple choice, BEST/FIRST manager-mindset questions (every option is plausible; the explanation says why the runner-up loses), multi-select, and drag-and-drop style ordering and matching.</p>
+   <div class="smart"><div><b>Smart review</b><div class="muted" style="font-size:14px">10 questions picked from what you've missed, your weakest domains, your focus areas and what you haven't seen yet.</div></div><button class="btn" id="smartGo">Start smart review</button></div>
    ${domChips(quizD,{extra:`<button class="chip ${quizD===-1?"on":""}" data-dom="-1">My misses (${missN})</button>`})}
    <div class="chips" id="qtypes" style="margin-top:10px">${QTYPES.map(t=>`<button class="chip ${quizT===t[0]?"on":""}" data-t="${t[0]}">${t[1]} <span class="w">${cnt(t[0])}</span></button>`).join("")}</div>
    <div class="row" style="margin-top:12px"><button class="btn" id="qstart">Start 10 questions</button><span class="muted" style="font-size:13px" id="qinfo"></span></div></div>
@@ -533,10 +581,24 @@ V.quiz=()=>{
   $$("#qtypes .chip").forEach(c=>c.onclick=()=>{quizT=c.dataset.t;$$("#qtypes .chip").forEach(x=>x.classList.toggle("on",x===c));info();});
   const start=()=>{const pool=quizPool();const h=$("#qhost");if(!pool.length){h.innerHTML=`<div class="empty">Nothing matches that filter yet.</div>`;return;}runQuiz(h,sample(pool,10),{again:start});h.scrollIntoView({behavior:"smooth",block:"start"});};
   $("#qstart").onclick=start;
+  const smart=()=>{const h=$("#qhost");runQuiz(h,smartPick(10),{again:smart});h.scrollIntoView({behavior:"smooth",block:"start"});};
+  $("#smartGo").onclick=smart;
+  if(pendingSmart){pendingSmart=false;smart();}
 };
+let pendingSmart=false;
+function smartPick(n){
+  // priority: net misses > weak domain > focus domain > unseen; small random jitter
+  const focus=new Set(prof().focus||[]);const dm={};DOMAINS.forEach(d=>dm[d.id]=domainMastery(d.id).pct);
+  const scored=QS.map(q=>{const [r,w]=stat(q.id);const pct=dm[q.d];
+    let sc=(w-r)*3+(r+w===0?1.2:0)+(pct==null?0.8:(100-pct)/25)+(focus.has(q.d)?1.5:0)+(r>=2&&w===0?-4:0)+Math.random()*1.5;return {q,sc};});
+  scored.sort((a,b)=>b.sc-a.sc);
+  // keep it varied: max 3 per domain
+  const out=[],per={};for(const {q} of scored){if((per[q.d]||0)>=3)continue;out.push(q);per[q.d]=(per[q.d]||0)+1;if(out.length===n)break;}
+  return out;
+}
 function quizPool(){
   let p=quizD===-1?QS.filter(q=>stat(q.id)[1]>stat(q.id)[0]):quizD===0?QS:QS.filter(q=>q.d===quizD);
-  if(quizT!=="all")p=p.filter(q=>quizT==="dnd"?(q.type==="order"||q.type==="match"):q.type===quizT);
+  if(quizT!=="all")p=p.filter(q=>typeOK(q,quizT));
   return p;
 }
 
@@ -589,38 +651,55 @@ function osiTable(m){
   return `<div class="tblwrap" style="margin-top:4px"><table class="osi"><thead><tr><th>#</th><th>Layer</th><th>PDU · protocols · devices</th></tr></thead><tbody>${rows.map(r=>`<tr><td class="tnum">${r.n}</td><td><b>${esc(r.name)}</b><div class="muted" style="font-size:12px">${"Please Do Not Throw Sausage Pizza Away".split(" ")[r.n-1]} · ${"All People Seem To Need Data Processing".split(" ")[7-r.n]}</div></td><td>${esc(r.note)}</td></tr>`).join("")}</tbody></table></div>`;
 }
 
-/* ---------- flashcards ---------- */
-let fcState={src:"study",d:0,hideKnown:true,deck:[],i:0,flip:false};
-function buildDeck(){
+/* ---------- flashcards (spaced repetition, Leitner boxes) ---------- */
+// S.cards[key] = {b: box 0-5, due: ms timestamp}. "Got it" moves up a box; "Again" drops to box 0.
+const BOX_GAP=[0,4*36e5,864e5,3*864e5,7*864e5,14*864e5]; // due gap after reaching each box
+const MASTERED=4;
+Object.keys(S.cards).forEach(k=>{if(typeof S.cards[k]!=="object")S.cards[k]={b:2,due:Date.now()};});
+let fcState={src:"study",d:0,dueOnly:true,deck:[],i:0,flip:false};
+function allCards(){
   let cards=[];const d=fcState.d;
   if(fcState.src==="study")REV.forEach(r=>{if(d&&r.id!==d)return;r.review.forEach(c=>cards.push({k:"s:"+r.id+":"+c.t,f:c.t,b:c.d,src:`Study set · Domain ${r.id}`}));});
   if(fcState.src==="acr")ACR.forEach(x=>{if(d&&x.d!==d)return;cards.push({k:"a:"+x.a,f:x.a,b:x.f+(x.n?` — ${x.n}`:""),src:`Acronym · Domain ${x.d||"all"}`});});
   if(fcState.src==="regs"){BODIES.forEach(b=>cards.push({k:"b:"+b.n,f:b.n,b:`${b.f} (${b.r}). ${b.w}`,src:"Body"}));LAWS.forEach(b=>cards.push({k:"l:"+b.n,f:b.n,b:`${b.f} (${b.r}). ${b.w} ${b.x}`,src:"Law"}));STANDARDS.forEach(b=>cards.push({k:"t:"+b.n,f:b.n,b:b.w,src:"Standard"}));}
   if(fcState.src==="models")MODELS.forEach(m=>{if(d&&m.d!==d)return;cards.push({k:"m:"+m.id,f:m.name,b:`${m.mn}\n\n${m.steps.map((x,i)=>(m.ord?(i+1)+". ":"• ")+x[0]).join("\n")}`,src:`Model · Domain ${m.d}`});});
-  if(fcState.hideKnown)cards=cards.filter(c=>!S.cards[c.k]);
-  fcState.deck=shuffle(cards);fcState.i=0;fcState.flip=false;
+  return cards;
+}
+function cardStats(cards){const now=Date.now();let due=0,fresh=0,learning=0,mastered=0;
+  cards.forEach(c=>{const r=S.cards[c.k];if(!r){fresh++;return;}if(r.b>=MASTERED)mastered++;else learning++;if(r.due<=now)due++;});return {due,fresh,learning,mastered};}
+function buildDeck(){
+  const now=Date.now();let cards=allCards();
+  if(fcState.dueOnly){
+    const dueC=cards.filter(c=>S.cards[c.k]&&S.cards[c.k].due<=now).sort((a,b)=>S.cards[a.k].b-S.cards[b.k].b);
+    const fresh=shuffle(cards.filter(c=>!S.cards[c.k]));
+    cards=[...dueC,...fresh];
+  }else cards=shuffle(cards);
+  fcState.deck=cards;fcState.i=0;fcState.flip=false;
 }
 V.cards=()=>{
-  buildDeck();
-  const known=Object.keys(S.cards).length;
+  buildDeck();const st=cardStats(allCards());
   app.innerHTML=`<div class="stack">
-   <div><h2>Flashcards</h2><p class="lede">Tap the card to flip it. Mark <b>Got it</b> to retire a card, or <b>Again</b> to keep it in rotation. Keys: space flips, → next, 1 again, 2 got it.</p>
+   <div><h2>Flashcards</h2><p class="lede">Spaced repetition: <b>Got it</b> pushes a card further out (4 hours, then 1, 3, 7 and 14 days); <b>Again</b> brings it straight back. Cards you keep missing come up first. Keys: space flips, 1 again, 2 got it, → skip.</p>
    <div class="chips" id="fsrc">${[["study",`Study set (${REV.reduce((a,r)=>a+r.review.length,0)})`],["acr",`Acronyms (${ACR.length})`],["regs",`Laws & bodies (${BODIES.length+LAWS.length+STANDARDS.length})`],["models",`Models & mnemonics (${MODELS.length})`]].map(s=>`<button class="chip ${fcState.src===s[0]?"on":""}" data-s="${s[0]}">${esc(s[1])}</button>`).join("")}</div>
    <div id="fdom" style="margin-top:10px">${fcState.src==="regs"?"":domChips(fcState.d)}</div>
-   <div class="row" style="margin-top:10px;font-size:14px"><label class="row" style="gap:6px"><input type="checkbox" id="hidek" ${fcState.hideKnown?"checked":""}> Hide cards I've marked "Got it"</label><span class="tnum">${known} retired</span>${known?`<button class="chip" id="resetk">Reset</button>`:""}</div></div>
+   <div class="srsbar"><span><b>${st.due}</b> due</span><span><b>${st.fresh}</b> new</span><span><b>${st.learning}</b> learning</span><span><b>${st.mastered}</b> mastered</span></div>
+   <div class="row" style="margin-top:6px;font-size:14px"><label class="row" style="gap:6px"><input type="checkbox" id="dueonly" ${fcState.dueOnly?"checked":""}> Only due and new cards</label>${Object.keys(S.cards).length?`<button class="chip" id="resetk">Reset card history</button>`:""}</div></div>
    <div id="fhost"></div></div>`;
   $$("#fsrc .chip").forEach(c=>c.onclick=()=>{fcState.src=c.dataset.s;fcState.d=0;V.cards();});
   $$("#fdom .chip").forEach(c=>c.onclick=()=>{fcState.d=+c.dataset.dom;V.cards();});
-  $("#hidek").onchange=e=>{fcState.hideKnown=e.target.checked;V.cards();};
-  const rk=$("#resetk");if(rk)rk.onclick=()=>{S.cards={};save();V.cards();};
+  $("#dueonly").onchange=e=>{fcState.dueOnly=e.target.checked;V.cards();};
+  const rk=$("#resetk");if(rk)rk.onclick=()=>{rk.outerHTML=`<span>Clear all card history?</span><button class="chip" id="rky">Yes</button><button class="chip" id="rkn">No</button>`;$("#rky").onclick=()=>{S.cards={};save();V.cards();};$("#rkn").onclick=()=>V.cards();};
   drawCard();
 };
+function nextDue(){const ks=allCards().map(c=>S.cards[c.k]).filter(Boolean).map(r=>r.due).filter(t=>t>Date.now());return ks.length?Math.min(...ks):null;}
 function drawCard(){
   const h=$("#fhost");if(!h)return;const deck=fcState.deck;
-  if(!deck.length){h.innerHTML=`<div class="empty">No cards left in this set. Nice work — reset or pick another set.</div>`;return;}
-  if(fcState.i>=deck.length){h.innerHTML=`<div class="empty">End of deck (${deck.length} cards). <button class="btn" id="fre">Shuffle and go again</button></div>`;$("#fre").onclick=()=>{buildDeck();drawCard();};return;}
-  const c=deck[fcState.i];
-  h.innerHTML=`<div class="flash"><div class="tnum" style="margin-bottom:8px">${fcState.i+1} / ${deck.length}</div>
+  if(!deck.length||fcState.i>=deck.length){
+    const nd=nextDue();
+    h.innerHTML=`<div class="empty">${deck.length?`Done: ${deck.length} card${deck.length===1?"":"s"} reviewed.`:"Nothing due in this set right now."} ${nd?`Next card is due ${new Date(nd).toLocaleString(undefined,{weekday:"short",hour:"numeric",minute:"2-digit"})}.`:""}<div class="row" style="justify-content:center;margin-top:12px"><button class="btn ghost" id="fall">Review all cards anyway</button></div></div>`;
+    $("#fall").onclick=()=>{fcState.dueOnly=false;V.cards();};return;}
+  const c=deck[fcState.i];const r=S.cards[c.k];
+  h.innerHTML=`<div class="flash"><div class="tnum" style="margin-bottom:8px">${fcState.i+1} / ${deck.length} · ${r?`box ${r.b}${r.b>=MASTERED?" (mastered)":""}`:"new"}</div>
    <div class="fc ${fcState.flip?"flip":""}" id="fc" tabindex="0" role="button" aria-label="Flip card">
     <div class="side front"><div class="src">${esc(c.src)}</div><div class="term">${esc(c.f)}</div><div class="muted" style="font-size:13px">Tap to reveal</div></div>
     <div class="side back"><div class="src">${esc(c.f)}</div><div class="def">${esc(c.b)}</div></div>
@@ -629,12 +708,12 @@ function drawCard(){
   const flip=()=>{fcState.flip=!fcState.flip;$("#fc").classList.toggle("flip",fcState.flip);};
   $("#fc").onclick=flip;
   const next=()=>{fcState.i++;fcState.flip=false;drawCard();};
-  $("#fagain").onclick=()=>{fcState.deck.push(c);next();};
-  $("#fgot").onclick=()=>{S.cards[c.k]=1;save();next();};
+  $("#fagain").onclick=()=>{S.cards[c.k]={b:0,due:Date.now()};save();fcState.deck.push(c);next();};
+  $("#fgot").onclick=()=>{const b=Math.min(5,(r?r.b:0)+1);S.cards[c.k]={b,due:Date.now()+BOX_GAP[b]};save();next();};
   $("#fskip").onclick=next;
 }
 document.addEventListener("keydown",e=>{
-  if(currentView!=="cards"||/input|textarea/i.test(e.target.tagName))return;
+  if(currentView!=="cards"||/input|textarea|select/i.test(e.target.tagName))return;
   if(e.key===" "){e.preventDefault();const f=$("#fc");if(f)f.click();}
   else if(e.key==="ArrowRight"){const b=$("#fskip");if(b)b.click();}
   else if(e.key==="1"){const b=$("#fagain");if(b)b.click();}
@@ -666,7 +745,10 @@ $("#gsearch").addEventListener("input",e=>{clearTimeout(st);const q=e.target.val
 /* ---------- routing ---------- */
 let currentView="plan";
 function route(){
-  const v=(location.hash||"#plan").slice(1);currentView=V[v]?v:"plan";
+  let v=(location.hash||"#plan").slice(1);
+  if(v==="smart"){pendingSmart=true;v="quiz";}
+  const dm=v.match(/^drill-(\w+)$/);if(dm){drillState.mode=dm[1];v="drill";}
+  currentView=V[v]?v:"plan";
   if(stopActive){stopActive();stopActive=null;}
   const gs=$("#gsearch");if(gs.value){gs.value="";}
   $$("#tabs a").forEach(a=>a.classList.toggle("on",a.dataset.v===currentView));

@@ -8,10 +8,10 @@ A single-page study site for the CISSP exam (ISC2 outline effective April 15, 20
 - **Acronyms** – ~420 acronyms tagged by domain, with commonly confused pairs
 - **Laws & Bodies** – regulators, laws, standards, who enforces what, breach-notification clocks
 - **Models & Mnemonics** – 46 ordered models (OSI, RMF, IR, kill chain, EALs…) with mnemonics and "Test me" ordering drills
-- **Drills** – acronym rounds with same-initials decoys, look-alike acronyms, and redacted law/body/standard questions
-- **Domain Quiz** – 130 scenario questions plus multi-select ("Choose TWO"), ordering and matching items
+- **Drills** – acronym rounds with same-initials decoys, look-alike acronyms, redacted law/body/standard questions, generated calculations (SLE/ALE/ARO, safeguard value, RTO/MTD, availability, key counts, backup restores) and "Which key?" crypto scenarios
+- **Domain Quiz** – 130 scenario questions, 51 BEST/FIRST manager-mindset questions (with why the runner-up loses), multi-select, ordering and matching items, plus **Smart review** that targets misses, weak and focus domains
 - **Practice Test** – timed, domain-weighted, forward-only like the CAT
-- **Flashcards** – study-set cards, acronyms and laws, with "Got it / Again" tracking
+- **Flashcards** – study-set cards, acronyms, laws and models with spaced repetition (4 h → 1 → 3 → 7 → 14 days)
 
 ## Progress
 
@@ -30,6 +30,7 @@ The page is built from `src/`:
 | `src/regs.js` | Regulatory bodies, laws, standards |
 | `src/questions.js` | Scenario questions (correct answer listed first; shuffled at runtime) |
 | `src/advanced.js` | Multi-select and matching items |
+| `src/manager.js` | BEST/FIRST questions: best answer, runner-up and why it loses |
 | `src/models.js` | Ordered models + mnemonics (also generate ordering questions) |
 | `src/review.json` | Quick-review cards, formulas and memory aids parsed from the study set |
 | `src/app.js` | App logic |
