@@ -15,6 +15,8 @@ A single-page study site for the CISSP exam (ISC2 outline effective April 15, 20
 - **Drills** – acronym rounds with same-initials decoys, look-alike acronyms, redacted law/body/standard questions, generated calculations (SLE/ALE/ARO, safeguard value, RTO/MTD, availability, key counts, backup restores) and "Which key?" crypto scenarios
 - **Domain Quiz** – 194 scenario questions, 51 BEST/FIRST manager-mindset questions (with why the runner-up loses), multi-select, ordering, matching and hotspot (click-the-diagram) items, plus **Smart review** that targets misses, weak and focus domains
 - **Practice Test** – timed, domain-weighted, forward-only like the CAT
+- **History** – every quiz, drill, smart review and practice test is recorded: score-over-time chart, average/best/last/trend, per-domain breakdown and session list (filterable by drill or mode)
+- **Deep links** – plan items open the exact spot: a domain's cheat-sheet section, a ready-started domain quiz or drill; search results have "Open →" links
 - **Brain Dump** – write formulas, ports and models from memory; auto-checks what you got and whether it's in order; 10-minute timer
 - **Exam Day** – test-centre expectations, after-you-pass steps (endorsement, CPEs) and curated free resources
 - **Flashcards** – study-set cards, acronyms, laws and models with spaced repetition (4 h → 1 → 3 → 7 → 14 days)

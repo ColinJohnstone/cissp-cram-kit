@@ -98,7 +98,10 @@ ol.rules li::marker{color:var(--ink-3)}
 .bar i{display:block;height:100%;background:var(--ink-3)}
 .bar.low i{background:var(--bad)} .bar.mid i{background:#c98a00} .bar.hi i{background:var(--good)}
 .tnum{font-variant-numeric:tabular-nums;font-size:12px;color:var(--ink-3);white-space:nowrap}
-.dsec{scroll-margin-top:120px}
+.dsec,.model{scroll-margin-top:170px}
+.flash{animation:flashin 1.6s ease-out}
+@keyframes flashin{0%{box-shadow:0 0 0 3px var(--accent)}100%{box-shadow:0 0 0 3px transparent}}
+@media (prefers-reduced-motion:reduce){.flash{animation:none}}
 .dhead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:16px}
 .dhead h3{font-size:24px}
 .dhead .wt{font-size:13px;color:var(--ink-3)}
@@ -268,6 +271,30 @@ nav.tabs a{font-size:15px}
 .stitle{font-family:var(--display);font-weight:700;font-size:18px}
 .homelink{color:inherit;text-decoration:none;display:inline-flex;align-items:baseline}
 .homelink:hover .brand2{text-decoration:underline;text-underline-offset:3px}
+/* history */
+.histcard{margin-top:4px}
+.hstats{display:flex;flex-wrap:wrap;gap:12px 28px;margin:14px 0 6px}
+.hstats div{min-width:0}
+.hstats dt{font-size:12px;color:var(--ink-3)}
+.hstats dd{margin:0;font-family:var(--display);font-weight:700;font-size:24px;font-variant-numeric:tabular-nums}
+.hstats dd.up{color:var(--good)} .hstats dd.down{color:var(--bad)}
+.hchartwrap{margin-top:8px}
+.hchart{width:100%;height:auto;display:block;max-width:760px}
+.hchart .grid{stroke:var(--line);stroke-width:1}
+.hchart .tgt{stroke:var(--good);stroke-width:1.2;stroke-dasharray:5 5}
+.hchart .ax{fill:var(--ink-3);font:11px var(--mono)}
+.hchart .tgtl{fill:var(--good)}
+.hchart .ln{fill:none;stroke:var(--accent);stroke-width:2.2;stroke-linejoin:round}
+.hchart .dot{fill:var(--bg);stroke:var(--accent);stroke-width:2}
+.hchart .dot.low{stroke:var(--bad)} .hchart .dot.mid{stroke:#c98a00} .hchart .dot.hi{stroke:var(--good)}
+.htable{display:flex;flex-direction:column}
+.hrow{display:grid;grid-template-columns:170px minmax(0,1fr) minmax(60px,140px) 46px auto;gap:12px;align-items:center;padding:8px 0;border-top:1px solid var(--line);font-size:14px}
+.hrow:first-child{border-top:0}
+.hlabel{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hpct{color:var(--ink);text-align:right}
+a.hlink{color:inherit;text-decoration:none;grid-template-columns:150px minmax(0,1fr) minmax(40px,90px) 44px}
+a.hlink:hover .hlabel{color:var(--accent)}
+.reslink{font-size:13px;text-decoration:none;white-space:nowrap}
 .setupbtn{font:inherit;font-size:13px;color:var(--ink-2);background:transparent;border:1px solid var(--line);border-radius:999px;padding:3px 10px;cursor:pointer;white-space:nowrap}
 .setupbtn:hover{color:var(--ink);border-color:var(--line-2)}
 .ob{position:fixed;inset:0;z-index:50;background:color-mix(in srgb,var(--bg) 70%,transparent);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:grid;place-items:center;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));overflow:auto}
@@ -304,6 +331,10 @@ nav.tabs a{font-size:15px}
   .flabel{padding-top:0}
   .setup-head,.setup-foot{padding-inline:16px}
   nav.tabs{gap:20px}
+  .hrow,a.hlink{grid-template-columns:minmax(0,1fr) 44px;gap:4px 10px}
+  .hrow>.tnum:first-child{grid-column:1/-1}
+  .hrow>.bar{display:none}
+  .hrow>.tnum:last-child{grid-column:1/-1}
   .hist>div{grid-template-columns:90px minmax(40px,1fr) 40px}
   .hist>div>span:last-child{display:none}
 }
@@ -2071,7 +2102,7 @@ function diagramSVG(it){
 }
 function typeLabel(it){return it.type==="multi"?"Multi-select":it.type==="order"?"Put in order":it.type==="match"?"Matching":it.type==="hot"?"Hotspot":"";}
 function runQuiz(host,items,cfg){
-  let i=0,right=0;const log=[];let timerId=null;const exam=cfg.exam;const timed=cfg.minutes>0;
+  let i=0,right=0;const log=[];let timerId=null;const exam=cfg.exam;const t0=Date.now();const timed=cfg.minutes>0;
   const end=timed?Date.now()+cfg.minutes*60000:0;
   const order=items.map(it=>{const t=it.type||"single";const o={...it,type:t};
     if(t==="single"||t==="multi")o.shuffled=shuffle(it.opts);
@@ -2165,7 +2196,7 @@ function runQuiz(host,items,cfg){
     clearInterval(timerId);
     const n=log.length;const pct=n?Math.round(100*right/n):0;
     const byDom={};log.forEach(l=>{const d=l.it.d||0;byDom[d]=byDom[d]||[0,0];byDom[d][l.ok?0:1]++;});
-    if((exam||cfg.record)&&n){S.exams.unshift({t:Date.now(),n,right,pct,total:order.length});S.exams=S.exams.slice(0,12);save();}
+    if(cfg.hist&&n)recordSession(cfg.hist,log,order.length,Math.round((Date.now()-t0)/1000));
     const misses=log.filter(l=>!l.ok);
     host.innerHTML=`<div class="stack">
       <div class="card"><div class="row" style="align-items:flex-end;gap:18px">
@@ -2180,7 +2211,7 @@ function runQuiz(host,items,cfg){
     </div>`;
     $("#again",host).onclick=()=>cfg.again();
     const ts=$("#toSetup",host);if(ts)ts.onclick=()=>{cfg.back();window.scrollTo({top:0});};
-    const rd=$("#redo",host);if(rd)rd.onclick=()=>{stopActive=runQuiz(host,misses.map(l=>l.it),{...cfg,exam:false,minutes:0,record:false});};
+    const rd=$("#redo",host);if(rd)rd.onclick=()=>{stopActive=runQuiz(host,misses.map(l=>l.it),{...cfg,exam:false,minutes:0,record:false,hist:null});};
     if(cfg.scrollTop!==false)window.scrollTo({top:0});
   }
   draw();
@@ -2199,7 +2230,7 @@ function today0(){const t=new Date();return new Date(t.getFullYear(),t.getMonth(
 function daysLeft(){const e=examDate();return e?Math.round((e-today0())/864e5):null;}
 const fmt=(d,o)=>d.toLocaleDateString(undefined,o||{weekday:"short",month:"short",day:"numeric"});
 const addDays=(d,n)=>new Date(d.getFullYear(),d.getMonth(),d.getDate()+n);
-const L=(t,h)=>({t,h});
+const L=(t,h)=>({t,h,parts:[[t,h]]});
 function buildPlan(){
   const n=daysLeft();if(n==null)return null;
   const p=prof();const focus=(p.focus||[]).slice().sort((a,b)=>a-b);const topics=new Set(p.topics||[]);
@@ -2207,8 +2238,8 @@ function buildPlan(){
   if(n<0)return {past:true};
   if(n===0)return {mode:"day",rows:[{label:fmt(t0),date:t0,items:examItems,exam:true,today:true}]};
   const order=[...focus,...DOMAINS.map(d=>d.id).filter(id=>!focus.includes(id)).sort((a,b)=>DOMAINS[b-1].w-DOMAINS[a-1].w)];
-  const domTask=id=>L(`D${id} ${DNAME[id]}: cheat sheet, then a 10-question quiz${focus.includes(id)?" (focus)":""}`,"#cheat");
-  const deepTask=id=>L(`Deep dive D${id}: BEST/FIRST questions, smart review, flashcards`,"#smart");
+  const domTask=id=>({parts:[[`D${id} ${DNAME[id]}: cheat sheet`,`#cheat-d${id}`],", then ",["a 10-question quiz",`#quiz-d${id}`],focus.includes(id)?" (focus)":""]});
+  const deepTask=id=>({parts:[`Deep dive D${id}: `,["BEST/FIRST questions",`#best-d${id}`],", ",["smart review","#smart"],", ",["flashcards","#cards"]]});
   const drillFor=k=>({acr:L("Acronym drill: 15 questions, both directions","#drill-acr"),regs:L("Laws & bodies drill: 15 questions","#drill-body"),models:L("Models: “Test me” on 3 sequences","#models"),calc:L("Calculation drill: 10 problems (ALE, RTO, keys, backups)","#drill-calc"),keys:L("“Which key?” crypto drill: 10 questions","#drill-keys")}[k]);
   const drills=[...["acr","regs","models"].filter(k=>topics.has(k)),"calc","keys"];
   const review=[L("Brain dump: write formulas, ports and models from memory","#dump"),L("Read the Exam Day checklist","#examday"),L("Light review: mindset rules and commonly confused pairs","#acronyms"),L("Smart review: 2 rounds","#smart"),L("Flashcards marked “Again”, then stop early and sleep","#cards")];
@@ -2238,7 +2269,7 @@ function buildPlan(){
   const W=Math.ceil(n/7);const rows=Array.from({length:W},(_,w)=>({date:addDays(t0,w*7),items:[]}));
   const studyW=Math.max(1,W-1);
   tasks.forEach((t,i)=>rows[Math.floor(i*studyW/tasks.length)].items.push(t));
-  rows.slice(0,studyW).forEach((r,k)=>{if(drills.length)r.items.push({...drillFor(drills[k%drills.length]),t:drillFor(drills[k%drills.length]).t.replace(/^/,"Every other day: ")});});
+  rows.slice(0,studyW).forEach((r,k)=>{if(drills.length){const dd=drillFor(drills[k%drills.length]);r.items.push(L("Every other day: "+dd.t,dd.h));};});
   if(W>=3)rows[Math.floor(studyW/2)].items.push(halfTest);
   rows[W-1].items.push(fullTest,L("Retry misses from the practice test, by domain","#quiz"),...review);
   rows.forEach((r,w)=>{r.label=`Week ${w+1}`;r.sub=`from ${fmt(r.date,{month:"short",day:"numeric"})}`;r.today=w===0;});
@@ -2299,13 +2330,13 @@ function openSetup(first){
 }
 
 V.plan=()=>{
-  const p=prof();const n=daysLeft();const plan=buildPlan();const ex=S.exams.slice(0,5);
+  const p=prof();const n=daysLeft();const plan=buildPlan();const ex=S.hist.slice(-5).reverse();
   const focus=new Set(p.focus||[]);
   const head=n==null?`${p.name?esc(p.name)+", let's":"Let's"} get you ready`:n<0?`${p.name?esc(p.name)+", your":"Your"} exam date has passed`:n===0?`${p.name?esc(p.name)+", it's":"It's"} exam day`:`${p.name?esc(p.name)+", ":""}${n} day${n===1?"":"s"} to go`;
   const onPages=/github\.io$/.test(location.hostname);const shareUrl=location.origin+location.pathname;
   const planHTML=!plan?`<div class="empty" style="text-align:left">Add your exam date to get a day-by-day plan. <button class="btn ghost" id="addDate" style="margin-left:8px">Add exam date</button></div>`
     :plan.past?`<div class="empty" style="text-align:left">Hope it went well! Set a new date if you're retaking it. <button class="btn ghost" id="addDate" style="margin-left:8px">Edit setup</button></div>`
-    :`<div class="plan">${plan.rows.map(r=>`<div class="day ${r.today?"today":""} ${r.exam?"exam":""}"><div class="when"><b>${r.exam?"Exam":esc(r.label.split(",")[0])}</b>${r.exam?esc(r.label):r.sub?esc(r.sub):esc(r.label.split(",").slice(1).join(",")||"")}</div><ul>${r.items.map(x=>`<li>${x.h?`<a class="plink" href="${x.h}">${esc(x.t)}</a>`:esc(x.t)}</li>`).join("")}</ul></div>`).join("")}</div>`;
+    :`<div class="plan">${plan.rows.map(r=>`<div class="day ${r.today?"today":""} ${r.exam?"exam":""}"><div class="when"><b>${r.exam?"Exam":esc(r.label.split(",")[0])}</b>${r.exam?esc(r.label):r.sub?esc(r.sub):esc(r.label.split(",").slice(1).join(",")||"")}</div><ul>${r.items.map(x=>`<li>${(x.parts||[[x.t,x.h]]).map(pt=>typeof pt==="string"?esc(pt):pt[1]?`<a class="plink" href="${pt[1]}">${esc(pt[0])}</a>`:esc(pt[0])).join("")}</li>`).join("")}</ul></div>`).join("")}</div>`;
   app.innerHTML=`<div class="stack">
    <div><h2>${head}</h2><p class="lede dc">Built from a comprehensive CISSP study guide and its quick-review set, checked against the current ISC2 outline. Your setup and progress stay in this browser only.</p></div>
    <dl class="facts">${EXAMFACTS.map(f=>`<div><dt>${esc(f[0])}</dt><dd>${esc(f[1])}</dd></div>`).join("")}</dl>
@@ -2316,7 +2347,7 @@ V.plan=()=>{
     <div class="stack">
      <div class="card"><h3>Domain mastery</h3><p class="muted" style="font-size:13px;margin:0 0 12px">From your quiz and practice-test answers.</p>
       <div class="mast">${DOMAINS.map(d=>{const m=domainMastery(d.id);return `<span class="dnum">${d.id}</span><div><div style="font-size:13px;margin-bottom:3px">${esc(d.name)} <span class="muted">${d.w}%</span>${focus.has(d.id)?` <span class="focuspill">focus</span>`:""}</div><div class="bar ${barClass(m.pct)}"><i style="width:${m.pct||0}%"></i></div></div><span class="tnum">${m.pct==null?"—":m.pct+"%"}<br>${m.seen}/${m.total} seen</span>`;}).join("")}</div>
-      ${ex.length?`<h4 style="margin-top:16px">Recent practice tests</h4>${ex.map(e=>`<div class="tnum">${new Date(e.t).toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric"})} · ${e.right}/${e.n} · ${e.pct}%</div>`).join("")}`:""}
+      ${ex.length?`<h4 style="margin-top:18px">Recent sessions</h4><div class="htable">${ex.map(h=>`<a class="hrow hlink" href="#${h.kind==="test"?"exam":h.kind}"><span class="tnum">${esc(fmtWhen(h.t))}</span><span class="hlabel">${esc(h.kind==="test"?"Test":h.kind==="drill"?"Drill":"Quiz")} · ${esc(h.label)}</span><span class="bar ${barClass(h.pct)}"><i style="width:${h.pct}%"></i></span><b class="tnum hpct">${h.pct}%</b></a>`).join("")}</div>`:""}
      </div>
      <div class="mind"><h3>Think like a manager</h3><ol class="rules">${MINDSET.map(m=>`<li>${m}</li>`).join("")}</ol></div>
      ${onPages?`<div class="card"><h3>Share with a coworker</h3><p class="muted" style="font-size:14px;margin:0 0 10px">Everyone who opens the link gets their own setup and progress.</p><div class="row"><input class="sharebox" id="shareUrl" readonly value="${esc(shareUrl)}" aria-label="Link to share"><button class="btn ghost" id="copyLink">Copy link</button></div></div>`:""}
@@ -2324,7 +2355,7 @@ V.plan=()=>{
       <div class="row"><button class="btn ghost" id="pcCopy">Copy my progress code</button></div>
       <div class="row" style="margin-top:10px"><input class="sharebox" id="pcIn" placeholder="Paste a progress code (starts with CCK1.)" aria-label="Paste a progress code"><button class="btn ghost" id="pcLoad">Load</button></div>
       <p class="muted" id="pcMsg" style="font-size:13px;margin:8px 0 0" role="status"></p></div>
-     <div class="card"><h3>Reset</h3><p class="muted" style="font-size:14px;margin:0 0 10px">Clears your quiz history, practice tests and retired flashcards. Your setup stays.</p><div class="row" id="resetRow"><button class="btn ghost" id="resetBtn">Reset my progress</button></div></div>
+     <div class="card"><h3>Reset</h3><p class="muted" style="font-size:14px;margin:0 0 10px">Clears your quiz and drill history, practice tests and flashcard schedule. Your setup stays.</p><div class="row" id="resetRow"><button class="btn ghost" id="resetBtn">Reset my progress</button></div></div>
     </div>
    </div>
   </div>`;
@@ -2336,7 +2367,7 @@ V.plan=()=>{
   const cp=$("#copyLink");if(cp)cp.onclick=()=>{const done=()=>{cp.textContent="Copied";setTimeout(()=>cp.textContent="Copy link",1600);};
     try{navigator.clipboard.writeText(shareUrl).then(done,()=>{$("#shareUrl").select();});}catch(e){$("#shareUrl").select();}};
   $("#resetBtn").onclick=()=>{$("#resetRow").innerHTML=`<span style="font-size:14px">Clear all progress?</span><button class="btn" id="resetYes">Yes, reset</button><button class="btn ghost" id="resetNo">Keep it</button>`;
-    $("#resetYes").onclick=()=>{S.q={};S.cards={};S.exams=[];save();V.plan();};$("#resetNo").onclick=()=>V.plan();};
+    $("#resetYes").onclick=()=>{S.q={};S.cards={};S.exams=[];S.hist=[];save();V.plan();};$("#resetNo").onclick=()=>V.plan();};
 };
 
 
@@ -2535,6 +2566,57 @@ function session(title,back,run){
   window.scrollTo({top:0});const st=run($("#shost"));if(typeof st==="function")stopActive=st;
 }
 
+/* ---------- session history ---------- */
+S.hist=S.hist||[];
+if(S.exams&&S.exams.length&&!S.histMigrated){S.exams.forEach(e=>S.hist.push({t:e.t,kind:"test",sub:"exam",label:`Practice test · ${e.total||e.n} questions`,n:e.n,right:e.right,pct:e.pct,dom:{}}));S.hist.sort((a,b)=>a.t-b.t);S.histMigrated=true;save();}
+function recordSession(h,log,total,secs){
+  const n=log.length;if(!n)return;const right=log.filter(l=>l.ok).length;const dom={};
+  log.forEach(l=>{const d=l.it.d;if(!d)return;dom[d]=dom[d]||[0,0];dom[d][l.ok?0:1]++;});
+  S.hist.push({t:Date.now(),kind:h.kind,sub:h.sub||"",label:h.label,n,right,pct:Math.round(100*right/n),total,dom,secs});
+  if(S.hist.length>400)S.hist=S.hist.slice(-400);save();
+}
+const fmtWhen=t=>new Date(t).toLocaleString(undefined,{weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"});
+const fmtDur=s=>s==null?"":s<60?`${s}s`:`${Math.floor(s/60)}m ${String(s%60).padStart(2,"0")}s`;
+function histChart(rows){
+  const pts=rows.slice(-30);if(pts.length<2)return "";
+  const W=640,H=170,P={l:36,r:12,t:12,b:14};const x=i=>P.l+i*(W-P.l-P.r)/(pts.length-1);const y=v=>P.t+(100-v)*(H-P.t-P.b)/100;
+  return `<div class="hchartwrap"><svg class="hchart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Score per session, oldest to newest">
+    ${[0,25,50,75,100].map(v=>`<line x1="${P.l}" x2="${W-P.r}" y1="${y(v)}" y2="${y(v)}" class="${v===75?"tgt":"grid"}"/><text x="${P.l-8}" y="${y(v)+4}" class="ax" text-anchor="end">${v}%</text>`).join("")}
+    <text x="${W-P.r}" y="${y(75)-6}" class="ax tgtl" text-anchor="end">75% target</text>
+    <polyline points="${pts.map((p,i)=>`${x(i).toFixed(1)},${y(p.pct).toFixed(1)}`).join(" ")}" class="ln"/>
+    ${pts.map((p,i)=>`<circle cx="${x(i).toFixed(1)}" cy="${y(p.pct).toFixed(1)}" r="${i===pts.length-1?5:3.5}" class="dot ${barClass(p.pct)}"><title>${esc(fmtWhen(p.t))} · ${p.pct}% (${p.right}/${p.n}) · ${esc(p.label)}</title></circle>`).join("")}
+  </svg></div>`;
+}
+const HIST_SUBS={quiz:[["custom","Custom"],["smart","Smart review"],["misses","My misses"]],test:[["exam","Exam mode"],["study","Study mode"]],drill:null};
+function historyCard(kind,title){
+  return `<section class="card histcard" id="hist-${kind}"><div class="row" style="justify-content:space-between;align-items:baseline"><h3 style="margin:0">${title}</h3><span class="tnum" id="histCount-${kind}"></span></div><div id="histBody-${kind}"></div></section>`;
+}
+function drawHistory(kind){
+  const body=$("#histBody-"+kind);if(!body)return;
+  const st=S.prefs["hist_"+kind]||(S.prefs["hist_"+kind]={sub:"all",all:false});
+  const mine=S.hist.filter(h=>h.kind===kind);
+  $("#histCount-"+kind).textContent=mine.length?`${mine.length} session${mine.length===1?"":"s"}`:"";
+  if(!mine.length){body.innerHTML=`<p class="muted" style="margin:10px 0 0">No sessions yet. Your scores will show here after your first one.</p>`;return;}
+  const subs=kind==="drill"?Object.keys(DRILL_NAMES).filter(k=>mine.some(h=>h.sub===k)).map(k=>[k,DRILL_NAMES[k]]):(HIST_SUBS[kind]||[]).filter(s=>mine.some(h=>h.sub===s[0]));
+  if(st.sub!=="all"&&!subs.some(s=>s[0]===st.sub))st.sub="all";
+  const rows=mine.filter(h=>st.sub==="all"||h.sub===st.sub);
+  const avg=Math.round(rows.reduce((a,h)=>a+h.pct,0)/rows.length),best=Math.max(...rows.map(h=>h.pct)),last=rows[rows.length-1];
+  const tot=rows.reduce((a,h)=>a+h.n,0),cor=rows.reduce((a,h)=>a+h.right,0);
+  let trend="";if(rows.length>=4){const k=Math.min(5,Math.floor(rows.length/2));const a=rows.slice(-k),b=rows.slice(-2*k,-k);const d=Math.round(a.reduce((s,h)=>s+h.pct,0)/k-b.reduce((s,h)=>s+h.pct,0)/k);trend=`<div><dt>Trend</dt><dd class="${d>0?"up":d<0?"down":""}">${d>0?"▲ +":d<0?"▼ ":""}${d} pts</dd></div>`;}
+  const dom={};rows.forEach(h=>Object.entries(h.dom||{}).forEach(([d,[r,w]])=>{dom[d]=dom[d]||[0,0];dom[d][0]+=r;dom[d][1]+=w;}));
+  const domKeys=Object.keys(dom).sort();
+  const list=(st.all?rows:rows.slice(-8)).slice().reverse();
+  body.innerHTML=`${subs.length>1?`<div class="chips" style="margin:12px 0 4px">${[["all","All"],...subs].map(s=>`<button class="chip ${st.sub===s[0]?"on":""}" data-hsub="${s[0]}">${esc(s[1])}</button>`).join("")}</div>`:""}
+    <dl class="hstats"><div><dt>Sessions</dt><dd>${rows.length}</dd></div><div><dt>Average</dt><dd>${avg}%</dd></div><div><dt>Best</dt><dd>${best}%</dd></div><div><dt>Last</dt><dd>${last.pct}%</dd></div>${trend}<div><dt>Questions</dt><dd>${cor}/${tot}</dd></div></dl>
+    ${histChart(rows)}
+    ${domKeys.length?`<h4 style="margin:16px 0 8px">By domain, across these sessions</h4><div class="mast">${domKeys.map(d=>{const [r,w]=dom[d];const p=Math.round(100*r/(r+w));return `<span class="dnum">${d}</span><div><div style="font-size:13px;margin-bottom:3px">${esc(DNAME[d])}</div><div class="bar ${barClass(p)}"><i style="width:${p}%"></i></div></div><span class="tnum">${p}% · ${r}/${r+w}</span>`;}).join("")}</div>`:""}
+    <h4 style="margin:18px 0 6px">${st.all?"All sessions":"Recent sessions"}</h4>
+    <div class="htable">${list.map(h=>`<div class="hrow"><span class="tnum">${esc(fmtWhen(h.t))}</span><span class="hlabel">${esc(h.label)}</span><span class="bar ${barClass(h.pct)}"><i style="width:${h.pct}%"></i></span><b class="tnum hpct">${h.pct}%</b><span class="tnum">${h.right}/${h.n}${h.total&&h.n<h.total?` of ${h.total}`:""}${h.secs?` · ${fmtDur(h.secs)}`:""}</span></div>`).join("")}</div>
+    ${rows.length>8?`<button class="chip" id="hall-${kind}" style="margin-top:10px">${st.all?"Show recent only":`Show all ${rows.length}`}</button>`:""}`;
+  $$("[data-hsub]",body).forEach(b=>b.onclick=()=>{st.sub=b.dataset.hsub;save();drawHistory(kind);});
+  const ha=$("#hall-"+kind);if(ha)ha.onclick=()=>{st.all=!st.all;save();drawHistory(kind);};
+}
+
 /* ---------- drills view ---------- */
 const DRILL_GROUPS=[
  ["Acronyms",[["acr","Acronym → meaning","Every option spells the same letters."],["rev","Meaning → acronym","Spot the real one among look-alikes."]]],
@@ -2550,19 +2632,21 @@ V.drill=()=>{
      fRow("Drill",`<div class="dmodes">${DRILL_GROUPS.map(g=>`<div class="dgroup"><div class="dgname">${g[0]}</div><div class="dgcards">${g[1].map(m=>`<button class="dmode ${p.mode===m[0]?"on":""}" data-mode="${m[0]}" role="radio" aria-checked="${p.mode===m[0]}"><b>${esc(m[1])}</b><span>${esc(m[2])}</span></button>`).join("")}</div></div>`).join("")}</div>`),
      fRow("Domains",domPickHTML("dd",p.doms),{id:"ddRow",hidden:!acrMode(),hint:"Acronym drills only"}),
      fRow("Length",segHTML("dlen",[[10,"10"],[15,"15"],[25,"25"],[40,"40"]],p.len)),
-   ],"Start drill")}</div>`;
+   ],"Start drill")}${historyCard("drill","Drill history")}</div>`;
   const upd=()=>{$("#ddRow").hidden=!acrMode();$("#sum").textContent=`${p.len} questions · ${DRILL_NAMES[p.mode]}${acrMode()?` · ${domSummary(p.doms)}`:""}`;save();};
   $$(".dmode",app).forEach(b=>b.onclick=()=>{p.mode=b.dataset.mode;$$(".dmode",app).forEach(x=>{x.classList.toggle("on",x===b);x.setAttribute("aria-checked",x===b);});upd();});
   bindDom(app,"dd",p.doms,upd);bindSeg(app,"dlen",v=>{p.len=+v;upd();});upd();
   const start=()=>{const items=buildDrill(p.mode,acrMode()?p.doms:[],p.len);
-    session(`Drill · ${DRILL_NAMES[p.mode]}`,{label:"Drill setup",go:V.drill},h=>{if(!items.length){h.innerHTML=`<div class="empty">No items match. Try All domains.</div>`;return;}return runQuiz(h,items,{again:start,back:V.drill,backLabel:"Drill setup"});});};
+    session(`Drill · ${DRILL_NAMES[p.mode]}`,{label:"Drill setup",go:V.drill},h=>{if(!items.length){h.innerHTML=`<div class="empty">No items match. Try All domains.</div>`;return;}return runQuiz(h,items,{again:start,back:V.drill,backLabel:"Drill setup",hist:{kind:"drill",sub:p.mode,label:`${DRILL_NAMES[p.mode]}${acrMode()&&p.doms.length?` · ${domSummary(p.doms)}`:""}`}});});};
   $("#go").onclick=start;
+  drawHistory("drill");
+  if(pendingStart){pendingStart=false;start();}
 };
 
 /* ---------- quiz view ---------- */
 const QTYPES=[["all","All types"],["best","BEST / FIRST"],["single","Multiple choice"],["multi","Multi-select"],["dnd","Order, match & hotspot"]];
 const typeOK=(q,t)=>t==="all"||(t==="dnd"?(q.type==="order"||q.type==="match"||q.type==="hot"):t==="best"?!!q.best:q.type===t);
-let pendingSmart=false;
+let pendingSmart=false,pendingStart=false;
 function quizPool(p){
   let pool=p.mode==="misses"?QS.filter(q=>stat(q.id)[1]>stat(q.id)[0]):QS;
   if(p.doms.length)pool=pool.filter(q=>p.doms.includes(q.d));
@@ -2579,7 +2663,7 @@ V.quiz=()=>{
      fRow("Domains",domPickHTML("qd",p.doms),{id:"qdRow"}),
      fRow("Question types",`<div id="qtypes">${segHTML("qtype",QTYPES.map(t=>[t[0],t[1],cnt(t[0])]),p.type)}</div>`,{id:"qtRow"}),
      fRow("Length",segHTML("qlen",[[10,"10"],[20,"20"],[30,"30"],[50,"50"]],p.len)),
-   ],"Start quiz")}</div>`;
+   ],"Start quiz")}${historyCard("quiz","Quiz history")}</div>`;
   const upd=()=>{if(p.mode==="misses"&&!missN)p.mode="custom";const smart=p.mode==="smart";$("#qdRow").hidden=smart;$("#qtRow").hidden=smart;
     $("#qtypes").innerHTML=segHTML("qtype",QTYPES.map(t=>[t[0],t[1],cnt(t[0])]),p.type);bindSeg(app,"qtype",v=>{p.type=v;upd();});
     const pool=quizPool(p);const n=Math.min(p.len,smart?QS.length:pool.length);
@@ -2587,29 +2671,31 @@ V.quiz=()=>{
     $("#go").disabled=!smart&&!pool.length;save();};
   bindSeg(app,"qmode",v=>{p.mode=v;upd();});bindDom(app,"qd",p.doms,upd);bindSeg(app,"qlen",v=>{p.len=+v;upd();});upd();
   const start=()=>{const smart=p.mode==="smart";const items=smart?smartPick(p.len):sample(quizPool(p),p.len);
-    session(smart?"Smart review":p.mode==="misses"?"My misses":`Quiz · ${domSummary(p.doms)}`,{label:"Quiz setup",go:V.quiz},h=>runQuiz(h,items,{again:start,back:V.quiz,backLabel:"Quiz setup"}));};
+    session(smart?"Smart review":p.mode==="misses"?"My misses":`Quiz · ${domSummary(p.doms)}`,{label:"Quiz setup",go:V.quiz},h=>runQuiz(h,items,{again:start,back:V.quiz,backLabel:"Quiz setup",hist:{kind:"quiz",sub:p.mode,label:smart?"Smart review":p.mode==="misses"?"My misses":`${domSummary(p.doms).replace(/^all domains$/,"All domains")}${p.type!=="all"?` · ${QTYPES.find(t=>t[0]===p.type)[1]}`:""}`}}));};
   $("#go").onclick=start;
+  drawHistory("quiz");
   if(pendingSmart){pendingSmart=false;p.mode="smart";start();}
+  else if(pendingStart){pendingStart=false;start();}
 };
 
 /* ---------- practice test view ---------- */
 const LENGTHS=[[25,30],[50,60],[100,120],[150,180]];
 V.exam=()=>{
   const p=pref("exam",{len:50,feedback:"end",timer:"on"});
-  const ex=S.exams.slice(0,6);
   app.innerHTML=`<div class="stack"><div><h2>Practice Test</h2><p class="lede">Mixed domains, weighted like the real exam, with about 1 in 5 items multi-select, ordering, matching or hotspot. Timed at the real exam's pace of about 72 seconds per question.</p></div>
    ${panelHTML("Set up a practice test","",[
      fRow("Length",segHTML("elen",LENGTHS.map(l=>[l[0],`${l[0]} questions`]),p.len),{hint:"Real exam: 100–150"}),
      fRow("Answers",segHTML("efb",[["end","At the end (exam mode)"],["each","After each question (study mode)"]],p.feedback)),
      fRow("Timer",segHTML("etimer",[["on","On"],["off","Off"]],p.timer)),
    ],"Start test")}
-   ${ex.length?`<div class="card"><h3>Recent tests</h3><div class="hist">${ex.map(e=>`<div><span class="tnum">${new Date(e.t).toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric"})}</span><span class="bar ${barClass(e.pct)}"><i style="width:${e.pct}%"></i></span><b class="tnum" style="color:var(--ink)">${e.pct}%</b><span class="tnum">${e.right}/${e.n}</span></div>`).join("")}</div></div>`:""}</div>`;
+   ${historyCard("test","Practice test history")}</div>`;
   const mins=()=>LENGTHS.find(l=>l[0]===p.len)[1];
   const upd=()=>{$("#sum").textContent=`${p.len} questions${p.timer==="on"?` · ${mins()} minutes`:" · untimed"} · ${p.feedback==="end"?"forward-only, score at the end":"explanations as you go"}`;save();};
   bindSeg(app,"elen",v=>{p.len=+v;upd();});bindSeg(app,"efb",v=>{p.feedback=v;upd();});bindSeg(app,"etimer",v=>{p.timer=v;upd();});upd();
   const start=()=>{const items=weighted(p.len);
-    session(`Practice test · ${p.len} questions`,{label:"Test setup",go:V.exam},h=>runQuiz(h,items,{exam:p.feedback==="end",minutes:p.timer==="on"?mins():0,record:true,again:start,back:V.exam,backLabel:"Test setup"}));};
+    session(`Practice test · ${p.len} questions`,{label:"Test setup",go:V.exam},h=>runQuiz(h,items,{exam:p.feedback==="end",minutes:p.timer==="on"?mins():0,record:true,again:start,back:V.exam,backLabel:"Test setup",hist:{kind:"test",sub:p.feedback==="end"?"exam":"study",label:`${p.len} questions · ${p.feedback==="end"?"exam mode":"study mode"}${p.timer==="on"?"":" · untimed"}`}}));};
   $("#go").onclick=start;
+  drawHistory("test");
 };
 function weighted(n){ // ~80% multiple choice, ~20% other item types per domain
   const out=[];const byD={};QS.forEach(q=>{const g=q.type==="single"?"s":"a";((byD[q.d]=byD[q.d]||{s:[],a:[]})[g]).push(q);});
@@ -2828,12 +2914,12 @@ function loadProgressCode(code){
 let INDEX=null;
 function buildIndex(){
   INDEX=[];
-  ACR.forEach(x=>INDEX.push({tag:`Acronym · D${x.d||"–"}`,h:`<b class="mono" style="color:var(--accent)">${esc(x.a)}</b> — ${esc(x.f)}${x.n?`<div class="muted">${esc(x.n)}</div>`:""}`,t:x.a+" "+x.f+" "+x.n,w:x.a}));
-  BODIES.forEach(b=>INDEX.push({tag:"Regulatory body",h:`<b>${esc(b.n)}</b> — ${esc(b.f)} (${esc(b.r)})<div>${esc(b.w)}</div>`,t:Object.values(b).join(" "),w:b.n}));
-  LAWS.forEach(b=>INDEX.push({tag:"Law / regulation",h:`<b>${esc(b.n)}</b> — ${esc(b.f)} (${esc(b.r)})<div>${esc(b.w)}</div><div class="muted">${esc(b.x)}</div>`,t:Object.values(b).join(" "),w:b.n}));
-  MODELS.forEach(m=>INDEX.push({tag:`Model · D${m.d}`,h:`<b>${esc(m.name)}</b> — <i>${esc(m.mn)}</i><div>${m.steps.map(x=>esc(x[0])).join(" → ")}</div>`,t:m.name+" "+m.mn+" "+m.steps.map(x=>x.join(" ")).join(" "),w:m.name}));
-  STANDARDS.forEach(b=>INDEX.push({tag:"Standard",h:`<b>${esc(b.n)}</b> — ${esc(b.w)}`,t:b.n+" "+b.w,w:b.n}));
-  DOMAINS.forEach(d=>CHEAT[d.id].forEach(bl=>bl[1].forEach(x=>INDEX.push({tag:`Cheat sheet · D${d.id} · ${bl[0]}`,h:x,t:strip(x),w:""}))));
+  ACR.forEach(x=>INDEX.push({go:"#acronyms",tag:`Acronym · D${x.d||"–"}`,h:`<b class="mono" style="color:var(--accent)">${esc(x.a)}</b> — ${esc(x.f)}${x.n?`<div class="muted">${esc(x.n)}</div>`:""}`,t:x.a+" "+x.f+" "+x.n,w:x.a}));
+  BODIES.forEach(b=>INDEX.push({go:"#regs",tag:"Regulatory body",h:`<b>${esc(b.n)}</b> — ${esc(b.f)} (${esc(b.r)})<div>${esc(b.w)}</div>`,t:Object.values(b).join(" "),w:b.n}));
+  LAWS.forEach(b=>INDEX.push({go:"#regs",tag:"Law / regulation",h:`<b>${esc(b.n)}</b> — ${esc(b.f)} (${esc(b.r)})<div>${esc(b.w)}</div><div class="muted">${esc(b.x)}</div>`,t:Object.values(b).join(" "),w:b.n}));
+  MODELS.forEach(m=>INDEX.push({go:`#models-${m.id}`,tag:`Model · D${m.d}`,h:`<b>${esc(m.name)}</b> — <i>${esc(m.mn)}</i><div>${m.steps.map(x=>esc(x[0])).join(" → ")}</div>`,t:m.name+" "+m.mn+" "+m.steps.map(x=>x.join(" ")).join(" "),w:m.name}));
+  STANDARDS.forEach(b=>INDEX.push({go:"#regs",tag:"Standard",h:`<b>${esc(b.n)}</b> — ${esc(b.w)}`,t:b.n+" "+b.w,w:b.n}));
+  DOMAINS.forEach(d=>CHEAT[d.id].forEach(bl=>bl[1].forEach(x=>INDEX.push({go:`#cheat-d${d.id}`,tag:`Cheat sheet · D${d.id} · ${bl[0]}`,h:x,t:strip(x),w:""}))));
   REV.forEach(r=>{r.review.forEach(c=>INDEX.push({tag:`Study set · D${r.id}`,h:`<b>${esc(c.t)}</b> — ${esc(c.d)}`,t:c.t+" "+c.d,w:c.t}));r.topics.forEach(c=>INDEX.push({tag:`Concept · D${r.id}`,h:`<b>${esc(c.t)}</b> — ${esc(c.d)}`,t:c.t+" "+c.d,w:c.t}));});
 }
 function search(q){
@@ -2841,7 +2927,7 @@ function search(q){
   const ql=q.toLowerCase();
   const hits=INDEX.filter(x=>x.t.toLowerCase().includes(ql)).map(x=>({x,s:(x.w&&x.w.toLowerCase()===ql?0:x.w&&x.w.toLowerCase().startsWith(ql)?1:2)})).sort((a,b)=>a.s-b.s).slice(0,80);
   app.innerHTML=`<div class="stack"><div><h2>Results for “${esc(q)}”</h2><p class="lede">${hits.length===80?"Top 80 matches":hits.length+" matches"} across acronyms, regulators, the cheat sheet and the study set. Clear the search box to go back.</p></div>
-   <div class="results">${hits.map(h=>`<div class="res"><div class="tag">${esc(h.x.tag)}</div>${hlHTML(h.x.h,q)}</div>`).join("")||`<div class="empty">Nothing found. Try a shorter term.</div>`}</div></div>`;
+   <div class="results">${hits.map(h=>`<div class="res"><div class="row" style="justify-content:space-between;gap:8px"><span class="tag">${esc(h.x.tag)}</span>${h.x.go?`<a class="reslink" href="${h.x.go}">Open →</a>`:""}</div>${hlHTML(h.x.h,q)}</div>`).join("")||`<div class="empty">Nothing found. Try a shorter term.</div>`}</div></div>`;
 }
 let st;
 let searching=false;
@@ -2863,17 +2949,25 @@ function drawNav(){
 /* ---------- routing ---------- */
 let currentView="plan";
 function route(keepSearch){
-  let v=(location.hash||"#plan").slice(1);
+  let v=(location.hash||"#plan").slice(1);let anchor=null;const raw=v;
   if(v==="smart"){pendingSmart=true;v="quiz";}
-  const dm=v.match(/^drill-(\w+)$/);if(dm){drillState.mode=dm[1];v="drill";}
+  let m;
+  if((m=v.match(/^drill-(\w+)$/))&&DRILL_NAMES[m[1]]){S.prefs.drill=Object.assign(S.prefs.drill||{},{mode:m[1],len:({calc:10,keys:10})[m[1]]||15});pendingStart=true;v="drill";}
+  else if((m=v.match(/^(quiz|best)-d([1-8])$/))){S.prefs.quiz=Object.assign(S.prefs.quiz||{},{mode:"custom",doms:[+m[2]],type:m[1]==="best"?"best":"all",len:10});pendingStart=true;v="quiz";}
+  else if((m=v.match(/^cheat-d([1-8])$/))){anchor="d"+m[1];v="cheat";}
+  else if((m=v.match(/^models-(\w+)$/))){anchor="mod-"+m[1];v="models";modD=0;}
+  if(raw!==v){try{history.replaceState(null,"","#"+v);}catch(e){}}
   currentView=V[v]?v:"plan";
   if(stopActive){stopActive();stopActive=null;}
   clearInterval(dumpTimer);
   const gs=$("#gsearch");if(!keepSearch&&gs.value){gs.value="";searching=false;}
   drawNav();
-  V[currentView]();window.scrollTo({top:0});
+  V[currentView]();
+  const target=anchor&&document.getElementById(anchor);
+  if(target){requestAnimationFrame(()=>{const hb=$("header.top").getBoundingClientRect().bottom;window.scrollTo({top:Math.max(0,target.getBoundingClientRect().top+window.scrollY-hb-14)});target.classList.remove("flash");void target.offsetWidth;target.classList.add("flash");});}
+  else if(!$(".session",app))window.scrollTo({top:0});
 }
-window.addEventListener("hashchange",route);
+window.addEventListener("hashchange",()=>route());
 $("#setupBtn").onclick=()=>openSetup(false);
 $("#homeLink").onclick=e=>{if((location.hash||"#plan")==="#plan"){e.preventDefault();route();}};
 $("#themeBtn").onclick=e=>openThemePicker(e.currentTarget);
