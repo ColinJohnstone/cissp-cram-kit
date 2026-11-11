@@ -2844,7 +2844,12 @@ function search(q){
    <div class="results">${hits.map(h=>`<div class="res"><div class="tag">${esc(h.x.tag)}</div>${hlHTML(h.x.h,q)}</div>`).join("")||`<div class="empty">Nothing found. Try a shorter term.</div>`}</div></div>`;
 }
 let st;
-$("#gsearch").addEventListener("input",e=>{clearTimeout(st);const q=e.target.value.trim();st=setTimeout(()=>{if(q.length>=2){if(stopActive){stopActive();stopActive=null;}search(q);$$("#tabs a, #subtabs a").forEach(a=>a.classList.remove("on"));}else route();},160);});
+let searching=false;
+$("#gsearch").addEventListener("input",e=>{clearTimeout(st);const q=e.target.value.trim();st=setTimeout(()=>{
+  if(q.length>=2){if(stopActive){stopActive();stopActive=null;}searching=true;search(q);$$("#tabs a, #subtabs a").forEach(a=>a.classList.remove("on"));}
+  else if(searching){searching=false;route(true);} // leave search results, but keep what's typed
+},160);});
+$("#gsearch").addEventListener("keydown",e=>{if(e.key==="Escape"&&e.target.value){e.target.value="";if(searching){searching=false;route(true);}}});
 
 /* ---------- navigation ---------- */
 const SECTIONS={learn:[["cheat","Cheat Sheet"],["acronyms","Acronyms",1],["regs","Laws & Bodies",1],["models","Models & Mnemonics"]],practice:[["quiz","Quiz"],["drill","Drills"],["exam","Practice Test"],["cards","Flashcards"],["dump","Brain Dump"]]};
@@ -2857,14 +2862,14 @@ function drawNav(){
 }
 /* ---------- routing ---------- */
 let currentView="plan";
-function route(){
+function route(keepSearch){
   let v=(location.hash||"#plan").slice(1);
   if(v==="smart"){pendingSmart=true;v="quiz";}
   const dm=v.match(/^drill-(\w+)$/);if(dm){drillState.mode=dm[1];v="drill";}
   currentView=V[v]?v:"plan";
   if(stopActive){stopActive();stopActive=null;}
   clearInterval(dumpTimer);
-  const gs=$("#gsearch");if(gs.value){gs.value="";}
+  const gs=$("#gsearch");if(!keepSearch&&gs.value){gs.value="";searching=false;}
   drawNav();
   V[currentView]();window.scrollTo({top:0});
 }
