@@ -395,6 +395,7 @@ function openSetup(first){
     S.profile={name:draft.name,date:draft.date,focus:[...draft.focus].sort((a,b)=>a-b),topics:[...draft.topics],done:true};
     if(S.profile.focus.length){S.prefs.quiz=Object.assign(S.prefs.quiz||{},{doms:S.profile.focus.slice(0,1)});}
     save();close();countdown();if(currentView==="plan")V.plan();else location.hash="#plan";
+    if(first)setTimeout(()=>showA2HS(false),800);
   }
   function close(){ov.remove();document.removeEventListener("keydown",esc_);if(prevFocus&&prevFocus.focus)prevFocus.focus();}
   function esc_(e){if(e.key==="Escape"&&!first)close();}
@@ -423,6 +424,7 @@ V.plan=()=>{
       ${ex.length?`<h4 style="margin-top:18px">Recent sessions</h4><div class="htable">${ex.map(h=>`<a class="hrow hlink" href="#${h.kind==="test"?"exam":h.kind}"><span class="tnum">${esc(fmtWhen(h.t))}</span><span class="hlabel">${esc(h.kind==="test"?"Test":h.kind==="drill"?"Drill":"Quiz")} · ${esc(h.label)}</span><span class="bar ${barClass(h.pct)}"><i style="width:${h.pct}%"></i></span><b class="tnum hpct">${h.pct}%</b></a>`).join("")}</div>`:""}
      </div>
      <div class="mind"><h3>Think like a manager</h3><ol class="rules">${MINDSET.map(m=>`<li>${m}</li>`).join("")}</ol></div>
+     ${TOP&&!STANDALONE()&&onPages?`<div class="card"><h3>Put it on your phone</h3><p class="muted" style="font-size:14px;margin:0 0 10px">Add CISSPrep to your Home Screen for one-tap access. It works offline too.</p><button class="btn ghost" id="a2open">Add to Home Screen</button></div>`:""}
      ${onPages?`<div class="card"><h3>Share with a coworker</h3><p class="muted" style="font-size:14px;margin:0 0 10px">Everyone who opens the link gets their own setup and progress.</p><div class="row"><input class="sharebox" id="shareUrl" readonly value="${esc(shareUrl)}" aria-label="Link to share"><button class="btn ghost" id="copyLink">Copy link</button></div></div>`:""}
      <div class="card"><h3>Move to another device</h3><p class="muted" style="font-size:14px;margin:0 0 10px">Your progress lives in this browser. Copy your progress code, then paste it into the site on your other device.</p>
       <div class="row"><button class="btn ghost" id="pcCopy">Copy my progress code</button></div>
@@ -436,6 +438,7 @@ V.plan=()=>{
     const fallback=()=>{$("#pcIn").value=code;$("#pcIn").select();msg.textContent="Couldn't copy automatically. The code is selected in the box; copy it from there.";};
     try{navigator.clipboard.writeText(code).then(()=>msg.textContent="Copied. Paste it into this site on your other device.",fallback);}catch(e){fallback();}};
   $("#pcLoad").onclick=()=>{const msg=$("#pcMsg");try{loadProgressCode($("#pcIn").value);countdown();V.plan();$("#pcMsg").textContent="Progress loaded.";}catch(e){msg.textContent=e.message.startsWith("That")||e.message.startsWith("The code")?e.message:"That code couldn't be read. Copy the whole code and try again.";}};
+  const a2o=$("#a2open");if(a2o)a2o.onclick=()=>showA2HS(true);
   const ed=()=>openSetup(false);$("#editPlan").onclick=ed;const ad=$("#addDate");if(ad)ad.onclick=ed;
   const cp=$("#copyLink");if(cp)cp.onclick=()=>{const done=()=>{cp.textContent="Copied";setTimeout(()=>cp.textContent="Copy link",1600);};
     try{navigator.clipboard.writeText(shareUrl).then(done,()=>{$("#shareUrl").select();});}catch(e){$("#shareUrl").select();}};
@@ -1019,6 +1022,32 @@ function drawNav(){
   const sub=$("#subtabs");const list=SECTIONS[sec];sub.hidden=!list;
   if(list){sub.innerHTML=list.map(x=>`<a href="#${x[0]}" class="${x[0]===currentView?"on":""}">${esc(x[1])}${x[2]?'<span class="pip"></span>':""}</a>`).join("");const on=$("a.on",sub);if(on)on.scrollIntoView({block:"nearest",inline:"nearest"});}
 }
+/* ---------- install / add to home screen ---------- */
+const TOP=(()=>{try{return window.top===window.self;}catch(e){return false;}})();
+const STANDALONE=()=>window.matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
+const IS_IOS=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+const IS_MOBILE=IS_IOS||/android|mobile/i.test(navigator.userAgent)||(window.matchMedia("(pointer:coarse)").matches&&window.innerWidth<900);
+let deferredInstall=null;
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredInstall=e;const btn=$("#a2go");if(btn)btn.hidden=false;const st=$("#a2steps");if(st)st.hidden=true;});
+window.addEventListener("appinstalled",()=>{S.prefs.a2hs={done:true};save();closeA2HS();});
+if(TOP&&"serviceWorker" in navigator&&/^https:$/.test(location.protocol)){try{navigator.serviceWorker.register("sw.js").catch(()=>{});}catch(e){}}
+function closeA2HS(){const el=$("#a2hs");if(el)el.remove();}
+const SHARE_ICO='<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="Share"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>';
+function showA2HS(force){
+  if(!TOP||STANDALONE()||$("#a2hs"))return;
+  const st=S.prefs.a2hs||{};
+  if(!force&&(st.done||(st.snooze&&Date.now()<st.snooze)||!IS_MOBILE))return;
+  const el=document.createElement("div");el.id="a2hs";el.className="a2hs";el.setAttribute("role","dialog");el.setAttribute("aria-label","Add CISSPrep to your Home Screen");
+  const iosSteps=`<ol class="a2steps"><li>Tap the <b>Share</b> button ${SHARE_ICO} in ${/crios|fxios|edgios/i.test(navigator.userAgent)?"your browser's toolbar":"Safari's toolbar"}.</li><li>Scroll down and tap <b>Add to Home Screen</b>.</li><li>Tap <b>Add</b>.</li></ol>`;
+  const otherSteps=`<ol class="a2steps"><li>Open your browser's menu (<b>⋮</b>).</li><li>Tap <b>Install app</b> or <b>Add to Home screen</b>.</li></ol>`;
+  el.innerHTML=`<div class="a2in"><div class="a2top"><img src="icons/icon-192.png" alt="" onerror="this.style.display='none'"><div><b>Add CISSPrep to your Home Screen</b><span>One tap to study, full screen, and it works offline.</span></div></div>
+    <div id="a2steps" ${deferredInstall?"hidden":""}>${IS_IOS?iosSteps:otherSteps}</div>
+    <div class="a2btns"><button class="btn ghost" id="a2later">Not now</button><button class="btn ghost" id="a2never">Don't ask again</button><button class="btn" id="a2go" ${deferredInstall?"":"hidden"}>Install</button></div></div>`;
+  document.body.appendChild(el);
+  $("#a2later").onclick=()=>{S.prefs.a2hs={snooze:Date.now()+3*864e5};save();closeA2HS();};
+  $("#a2never").onclick=()=>{S.prefs.a2hs={done:true};save();closeA2HS();};
+  $("#a2go").onclick=async()=>{if(!deferredInstall)return;deferredInstall.prompt();try{const r=await deferredInstall.userChoice;if(r&&r.outcome==="accepted"){S.prefs.a2hs={done:true};save();closeA2HS();}}catch(e){}deferredInstall=null;};
+}
 /* ---------- routing ---------- */
 let currentView="plan";
 function route(keepSearch){
@@ -1046,4 +1075,5 @@ $("#homeLink").onclick=e=>{if((location.hash||"#plan")==="#plan"){e.preventDefau
 $("#themeBtn").onclick=e=>openThemePicker(e.currentTarget);
 countdown();route();
 if(!S.profile||!S.profile.done)openSetup(true);
+else setTimeout(()=>showA2HS(false),1200);
 })();

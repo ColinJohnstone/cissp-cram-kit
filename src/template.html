@@ -263,7 +263,22 @@ nav.tabs a{font-size:15px}
 .sbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding-bottom:12px;border-bottom:1px solid var(--line)}
 .sback{font:inherit;font-size:14px;font-weight:500;background:transparent;border:0;color:var(--accent);cursor:pointer;padding:4px 0}
 .stitle{font-family:var(--display);font-weight:700;font-size:18px}
-.homelink{color:inherit;text-decoration:none;display:inline-flex;align-items:baseline}
+.homelink{color:inherit;text-decoration:none;display:inline-flex;align-items:center}
+.logo{width:1.15em;height:1.15em;margin-right:.4em;flex:0 0 auto}
+.logo .lg-bg{fill:var(--accent)} .logo .lg-sh{fill:var(--bg)} .logo .lg-ck{fill:none;stroke:var(--accent);stroke-width:40;stroke-linecap:round;stroke-linejoin:round}
+[data-skin="brutal"] .logo .lg-bg{stroke:#111;stroke-width:24}
+/* install sheet */
+.a2hs{position:fixed;left:0;right:0;bottom:0;z-index:80;padding:16px max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:var(--bg);border-top:1px solid var(--line-2);box-shadow:0 -10px 40px rgba(0,0,0,.18);animation:a2up .3s ease-out}
+@keyframes a2up{from{transform:translateY(100%)}to{transform:none}}
+@media (prefers-reduced-motion:reduce){.a2hs{animation:none}}
+.a2in{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.a2top{display:flex;gap:14px;align-items:center}
+.a2top img{width:56px;height:56px;border-radius:13px;flex:0 0 auto}
+.a2top b{font-family:var(--display);font-size:18px;display:block}
+.a2top span{font-size:14px;color:var(--ink-2)}
+.a2steps{margin:0;padding-left:22px;font-size:15px;display:flex;flex-direction:column;gap:6px}
+.a2steps .ico{display:inline-block;vertical-align:-3px;width:18px;height:18px}
+.a2btns{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
 .homelink:hover .brand2{text-decoration:underline;text-underline-offset:3px}
 /* history */
 .histcard{margin-top:4px}
@@ -541,7 +556,7 @@ a.hlink:hover .hlabel{color:var(--accent)}
 <header class="top">
   <div class="wrap">
     <div class="brand">
-      <h1><a href="#plan" class="homelink" id="homeLink" aria-label="CISSPrep home"><span class="tagbox">CISSP</span><span class="brand2">rep</span></a></h1>
+      <h1><a href="#plan" class="homelink" id="homeLink" aria-label="CISSPrep home"><svg class="logo" viewBox="0 0 512 512" aria-hidden="true"><rect width="512" height="512" rx="112" class="lg-bg"/><path d="M256 92 L392 142 V252 C392 342 332 400 256 428 C180 400 120 342 120 252 V142 Z" class="lg-sh"/><path d="M188 262 L238 312 L330 214" class="lg-ck"/></svg><span class="tagbox">CISSP</span><span class="brand2">rep</span></a></h1>
       <span class="count" id="countdown"></span><button class="setupbtn" id="setupBtn">Edit setup</button><button class="setupbtn" id="themeBtn" aria-haspopup="true">Style</button>
       <span class="spacer"></span>
       <div class="search"><input id="gsearch" type="search" placeholder="Look up anything: OCSP, Biba, HIPAA, 800-88…" aria-label="Search everything"></div>

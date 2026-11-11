@@ -21,6 +21,10 @@ A single-page study site for the CISSP exam (ISC2 outline effective April 15, 20
 - **Exam Day** – test-centre expectations, after-you-pass steps (endorsement, CPEs) and curated free resources
 - **Flashcards** – study-set cards, acronyms, laws and models with spaced repetition (4 h → 1 → 3 → 7 → 14 days)
 
+## Install on your phone
+
+CISSPrep is an installable web app (manifest + service worker), so it works offline once loaded. On first visit on a phone it offers to add itself to the Home Screen: Android shows an Install button; iPhone shows the Share → Add to Home Screen steps. The prompt can be reopened from the Plan tab.
+
 ## Progress
 
 Your setup, quiz results, practice-test history and retired flashcards are saved in the browser's
@@ -44,6 +48,8 @@ The page is built from `src/`:
 | `src/review.json` | Quick-review cards, formulas and memory aids parsed from the study set |
 | `src/app.js` | App logic |
 | `src/template.html` | Styles and page shell |
+| `icons/`, `favicon.svg` | App icons (logo sources are the SVGs in `icons/`) |
+| `manifest.webmanifest`, `sw.js` | Install metadata and offline caching |
 
 After editing, rebuild:
 

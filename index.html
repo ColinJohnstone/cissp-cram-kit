@@ -3,6 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="CISSPrep: a CISSP study guide with cheat sheets, acronym and regulator drills, quizzes, practice tests and flashcards.">
+<meta name="theme-color" content="#2448e0">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="CISSPrep">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
 <title>CISSPrep</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -269,7 +279,22 @@ nav.tabs a{font-size:15px}
 .sbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding-bottom:12px;border-bottom:1px solid var(--line)}
 .sback{font:inherit;font-size:14px;font-weight:500;background:transparent;border:0;color:var(--accent);cursor:pointer;padding:4px 0}
 .stitle{font-family:var(--display);font-weight:700;font-size:18px}
-.homelink{color:inherit;text-decoration:none;display:inline-flex;align-items:baseline}
+.homelink{color:inherit;text-decoration:none;display:inline-flex;align-items:center}
+.logo{width:1.15em;height:1.15em;margin-right:.4em;flex:0 0 auto}
+.logo .lg-bg{fill:var(--accent)} .logo .lg-sh{fill:var(--bg)} .logo .lg-ck{fill:none;stroke:var(--accent);stroke-width:40;stroke-linecap:round;stroke-linejoin:round}
+[data-skin="brutal"] .logo .lg-bg{stroke:#111;stroke-width:24}
+/* install sheet */
+.a2hs{position:fixed;left:0;right:0;bottom:0;z-index:80;padding:16px max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:var(--bg);border-top:1px solid var(--line-2);box-shadow:0 -10px 40px rgba(0,0,0,.18);animation:a2up .3s ease-out}
+@keyframes a2up{from{transform:translateY(100%)}to{transform:none}}
+@media (prefers-reduced-motion:reduce){.a2hs{animation:none}}
+.a2in{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.a2top{display:flex;gap:14px;align-items:center}
+.a2top img{width:56px;height:56px;border-radius:13px;flex:0 0 auto}
+.a2top b{font-family:var(--display);font-size:18px;display:block}
+.a2top span{font-size:14px;color:var(--ink-2)}
+.a2steps{margin:0;padding-left:22px;font-size:15px;display:flex;flex-direction:column;gap:6px}
+.a2steps .ico{display:inline-block;vertical-align:-3px;width:18px;height:18px}
+.a2btns{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
 .homelink:hover .brand2{text-decoration:underline;text-underline-offset:3px}
 /* history */
 .histcard{margin-top:4px}
@@ -549,7 +574,7 @@ a.hlink:hover .hlabel{color:var(--accent)}
 <header class="top">
   <div class="wrap">
     <div class="brand">
-      <h1><a href="#plan" class="homelink" id="homeLink" aria-label="CISSPrep home"><span class="tagbox">CISSP</span><span class="brand2">rep</span></a></h1>
+      <h1><a href="#plan" class="homelink" id="homeLink" aria-label="CISSPrep home"><svg class="logo" viewBox="0 0 512 512" aria-hidden="true"><rect width="512" height="512" rx="112" class="lg-bg"/><path d="M256 92 L392 142 V252 C392 342 332 400 256 428 C180 400 120 342 120 252 V142 Z" class="lg-sh"/><path d="M188 262 L238 312 L330 214" class="lg-ck"/></svg><span class="tagbox">CISSP</span><span class="brand2">rep</span></a></h1>
       <span class="count" id="countdown"></span><button class="setupbtn" id="setupBtn">Edit setup</button><button class="setupbtn" id="themeBtn" aria-haspopup="true">Style</button>
       <span class="spacer"></span>
       <div class="search"><input id="gsearch" type="search" placeholder="Look up anything: OCSP, Biba, HIPAA, 800-88…" aria-label="Search everything"></div>
@@ -2322,6 +2347,7 @@ function openSetup(first){
     S.profile={name:draft.name,date:draft.date,focus:[...draft.focus].sort((a,b)=>a-b),topics:[...draft.topics],done:true};
     if(S.profile.focus.length){S.prefs.quiz=Object.assign(S.prefs.quiz||{},{doms:S.profile.focus.slice(0,1)});}
     save();close();countdown();if(currentView==="plan")V.plan();else location.hash="#plan";
+    if(first)setTimeout(()=>showA2HS(false),800);
   }
   function close(){ov.remove();document.removeEventListener("keydown",esc_);if(prevFocus&&prevFocus.focus)prevFocus.focus();}
   function esc_(e){if(e.key==="Escape"&&!first)close();}
@@ -2350,6 +2376,7 @@ V.plan=()=>{
       ${ex.length?`<h4 style="margin-top:18px">Recent sessions</h4><div class="htable">${ex.map(h=>`<a class="hrow hlink" href="#${h.kind==="test"?"exam":h.kind}"><span class="tnum">${esc(fmtWhen(h.t))}</span><span class="hlabel">${esc(h.kind==="test"?"Test":h.kind==="drill"?"Drill":"Quiz")} · ${esc(h.label)}</span><span class="bar ${barClass(h.pct)}"><i style="width:${h.pct}%"></i></span><b class="tnum hpct">${h.pct}%</b></a>`).join("")}</div>`:""}
      </div>
      <div class="mind"><h3>Think like a manager</h3><ol class="rules">${MINDSET.map(m=>`<li>${m}</li>`).join("")}</ol></div>
+     ${TOP&&!STANDALONE()&&onPages?`<div class="card"><h3>Put it on your phone</h3><p class="muted" style="font-size:14px;margin:0 0 10px">Add CISSPrep to your Home Screen for one-tap access. It works offline too.</p><button class="btn ghost" id="a2open">Add to Home Screen</button></div>`:""}
      ${onPages?`<div class="card"><h3>Share with a coworker</h3><p class="muted" style="font-size:14px;margin:0 0 10px">Everyone who opens the link gets their own setup and progress.</p><div class="row"><input class="sharebox" id="shareUrl" readonly value="${esc(shareUrl)}" aria-label="Link to share"><button class="btn ghost" id="copyLink">Copy link</button></div></div>`:""}
      <div class="card"><h3>Move to another device</h3><p class="muted" style="font-size:14px;margin:0 0 10px">Your progress lives in this browser. Copy your progress code, then paste it into the site on your other device.</p>
       <div class="row"><button class="btn ghost" id="pcCopy">Copy my progress code</button></div>
@@ -2363,6 +2390,7 @@ V.plan=()=>{
     const fallback=()=>{$("#pcIn").value=code;$("#pcIn").select();msg.textContent="Couldn't copy automatically. The code is selected in the box; copy it from there.";};
     try{navigator.clipboard.writeText(code).then(()=>msg.textContent="Copied. Paste it into this site on your other device.",fallback);}catch(e){fallback();}};
   $("#pcLoad").onclick=()=>{const msg=$("#pcMsg");try{loadProgressCode($("#pcIn").value);countdown();V.plan();$("#pcMsg").textContent="Progress loaded.";}catch(e){msg.textContent=e.message.startsWith("That")||e.message.startsWith("The code")?e.message:"That code couldn't be read. Copy the whole code and try again.";}};
+  const a2o=$("#a2open");if(a2o)a2o.onclick=()=>showA2HS(true);
   const ed=()=>openSetup(false);$("#editPlan").onclick=ed;const ad=$("#addDate");if(ad)ad.onclick=ed;
   const cp=$("#copyLink");if(cp)cp.onclick=()=>{const done=()=>{cp.textContent="Copied";setTimeout(()=>cp.textContent="Copy link",1600);};
     try{navigator.clipboard.writeText(shareUrl).then(done,()=>{$("#shareUrl").select();});}catch(e){$("#shareUrl").select();}};
@@ -2946,6 +2974,32 @@ function drawNav(){
   const sub=$("#subtabs");const list=SECTIONS[sec];sub.hidden=!list;
   if(list){sub.innerHTML=list.map(x=>`<a href="#${x[0]}" class="${x[0]===currentView?"on":""}">${esc(x[1])}${x[2]?'<span class="pip"></span>':""}</a>`).join("");const on=$("a.on",sub);if(on)on.scrollIntoView({block:"nearest",inline:"nearest"});}
 }
+/* ---------- install / add to home screen ---------- */
+const TOP=(()=>{try{return window.top===window.self;}catch(e){return false;}})();
+const STANDALONE=()=>window.matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
+const IS_IOS=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+const IS_MOBILE=IS_IOS||/android|mobile/i.test(navigator.userAgent)||(window.matchMedia("(pointer:coarse)").matches&&window.innerWidth<900);
+let deferredInstall=null;
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredInstall=e;const btn=$("#a2go");if(btn)btn.hidden=false;const st=$("#a2steps");if(st)st.hidden=true;});
+window.addEventListener("appinstalled",()=>{S.prefs.a2hs={done:true};save();closeA2HS();});
+if(TOP&&"serviceWorker" in navigator&&/^https:$/.test(location.protocol)){try{navigator.serviceWorker.register("sw.js").catch(()=>{});}catch(e){}}
+function closeA2HS(){const el=$("#a2hs");if(el)el.remove();}
+const SHARE_ICO='<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="Share"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>';
+function showA2HS(force){
+  if(!TOP||STANDALONE()||$("#a2hs"))return;
+  const st=S.prefs.a2hs||{};
+  if(!force&&(st.done||(st.snooze&&Date.now()<st.snooze)||!IS_MOBILE))return;
+  const el=document.createElement("div");el.id="a2hs";el.className="a2hs";el.setAttribute("role","dialog");el.setAttribute("aria-label","Add CISSPrep to your Home Screen");
+  const iosSteps=`<ol class="a2steps"><li>Tap the <b>Share</b> button ${SHARE_ICO} in ${/crios|fxios|edgios/i.test(navigator.userAgent)?"your browser's toolbar":"Safari's toolbar"}.</li><li>Scroll down and tap <b>Add to Home Screen</b>.</li><li>Tap <b>Add</b>.</li></ol>`;
+  const otherSteps=`<ol class="a2steps"><li>Open your browser's menu (<b>⋮</b>).</li><li>Tap <b>Install app</b> or <b>Add to Home screen</b>.</li></ol>`;
+  el.innerHTML=`<div class="a2in"><div class="a2top"><img src="icons/icon-192.png" alt="" onerror="this.style.display='none'"><div><b>Add CISSPrep to your Home Screen</b><span>One tap to study, full screen, and it works offline.</span></div></div>
+    <div id="a2steps" ${deferredInstall?"hidden":""}>${IS_IOS?iosSteps:otherSteps}</div>
+    <div class="a2btns"><button class="btn ghost" id="a2later">Not now</button><button class="btn ghost" id="a2never">Don't ask again</button><button class="btn" id="a2go" ${deferredInstall?"":"hidden"}>Install</button></div></div>`;
+  document.body.appendChild(el);
+  $("#a2later").onclick=()=>{S.prefs.a2hs={snooze:Date.now()+3*864e5};save();closeA2HS();};
+  $("#a2never").onclick=()=>{S.prefs.a2hs={done:true};save();closeA2HS();};
+  $("#a2go").onclick=async()=>{if(!deferredInstall)return;deferredInstall.prompt();try{const r=await deferredInstall.userChoice;if(r&&r.outcome==="accepted"){S.prefs.a2hs={done:true};save();closeA2HS();}}catch(e){}deferredInstall=null;};
+}
 /* ---------- routing ---------- */
 let currentView="plan";
 function route(keepSearch){
@@ -2973,6 +3027,7 @@ $("#homeLink").onclick=e=>{if((location.hash||"#plan")==="#plan"){e.preventDefau
 $("#themeBtn").onclick=e=>openThemePicker(e.currentTarget);
 countdown();route();
 if(!S.profile||!S.profile.done)openSetup(true);
+else setTimeout(()=>showA2HS(false),1200);
 })();
 
 </script>
