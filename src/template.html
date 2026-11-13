@@ -149,8 +149,19 @@ mark{background:var(--mark);color:inherit;border-radius:2px}
 .ordlist li{display:flex;align-items:center;gap:12px;padding:6px 6px 6px 14px;border:1px solid var(--line);border-radius:8px;counter-increment:o}
 .ordlist li::before{content:counter(o);font-family:var(--mono);font-size:12px;color:var(--ink-3);min-width:14px}
 .ordlist .ordtxt{flex:1;min-width:0}
+.ordhint{font-size:13px;color:var(--ink-3);margin:-6px 0 10px}
+.ordlist li{user-select:none;-webkit-user-select:none;cursor:grab;position:relative;background:var(--bg)}
+.ordlist li.shift{transition:transform .16s ease}
+.ordlist li.dragging{z-index:5;cursor:grabbing;box-shadow:0 10px 28px rgba(0,0,0,.2);border-color:var(--accent)}
+.ordlist li.dropped{animation:dropin .45s ease-out}
+@keyframes dropin{0%{box-shadow:0 0 0 3px var(--accent)}100%{box-shadow:0 0 0 3px transparent}}
+.ordlist.locked li{cursor:default}
+.ordlist .grip{display:grid;place-items:center;width:28px;height:36px;margin:-6px 0 -6px -8px;color:var(--ink-3);touch-action:none;cursor:grab;flex:0 0 auto}
+.ordlist .grip svg{fill:currentColor}
+.ordlist.locked .grip{opacity:.3}
+@media (prefers-reduced-motion:reduce){.ordlist li.shift{transition:none}.ordlist li.dropped{animation:none}}
 .ordbtns{display:flex;gap:4px;flex:0 0 auto}
-.mv{font:inherit;width:34px;height:34px;border-radius:6px;border:0;background:transparent;color:var(--ink-2);cursor:pointer}
+.mv{font:inherit;width:30px;height:30px;border-radius:6px;border:0;background:transparent;color:var(--ink-2);cursor:pointer}
 .mv:hover:not(:disabled){background:var(--surface-2);color:var(--ink)}
 .mv:disabled{opacity:.2;cursor:default}
 .ordlist li.right,.mrow.right{background:var(--good-soft);border-color:var(--good)}

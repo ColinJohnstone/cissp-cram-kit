@@ -185,7 +185,7 @@ function runQuiz(host,items,cfg){
   function tick(){const el=$("#timer",host);if(!el)return;const left=Math.max(0,end-Date.now());const m=Math.floor(left/60000),s=Math.floor(left%60000/1000);el.textContent=`${m}:${String(s).padStart(2,"0")}`;el.classList.toggle("warn",left<5*60000);if(left<=0){clearInterval(timerId);finish(true);}}
   function body(it){
     if(it.type==="single"||it.type==="multi")return `<div class="opts" role="${it.type==="multi"?"group":"radiogroup"}">${it.shuffled.map((o,k)=>`<button class="opt ${it.type==="multi"?"multi":""}" data-k="${k}" aria-pressed="false"><span class="k">${it.type==="multi"?'<span class="box"></span>':"ABCDEF"[k]}</span><span>${esc(o)}</span></button>`).join("")}</div>`;
-    if(it.type==="order")return `<ol class="ordlist" id="ordlist">${it.cur.map((x,k)=>`<li data-k="${k}"><span class="ordtxt">${esc(x)}</span><span class="ordbtns"><button class="mv" data-dir="-1" data-k="${k}" aria-label="Move up" ${k===0?"disabled":""}>↑</button><button class="mv" data-dir="1" data-k="${k}" aria-label="Move down" ${k===it.cur.length-1?"disabled":""}>↓</button></span></li>`).join("")}</ol>`;
+    if(it.type==="order")return `<p class="ordhint">Drag the items into order, or use the arrows.</p><ol class="ordlist" id="ordlist">${it.cur.map((x,k)=>`<li data-k="${k}"><span class="grip" aria-hidden="true"><svg viewBox="0 0 10 16" width="10" height="16"><circle cx="2.5" cy="3" r="1.5"/><circle cx="7.5" cy="3" r="1.5"/><circle cx="2.5" cy="8" r="1.5"/><circle cx="7.5" cy="8" r="1.5"/><circle cx="2.5" cy="13" r="1.5"/><circle cx="7.5" cy="13" r="1.5"/></svg></span><span class="ordtxt">${esc(x)}</span><span class="ordbtns"><button class="mv" data-dir="-1" data-k="${k}" aria-label="Move up" ${k===0?"disabled":""}>↑</button><button class="mv" data-dir="1" data-k="${k}" aria-label="Move down" ${k===it.cur.length-1?"disabled":""}>↓</button></span></li>`).join("")}</ol>`;
     if(it.type==="hot")return diagramSVG(it);
     if(it.type==="match")return `<div class="matchgrid">${it.pairs.map((p,k)=>`<label class="mrow" for="m${k}"><span class="ml">${esc(p[0])}</span><select id="m${k}" data-k="${k}"><option value="">Choose…</option>${it.rights.map(r=>`<option>${esc(r)}</option>`).join("")}</select></label>`).join("")}</div>`;
   }
@@ -229,8 +229,39 @@ function runQuiz(host,items,cfg){
     }
     $("#quit",host).onclick=()=>finish(false);
   }
+  function redrawOrder(it,focusK,dir){const y=window.scrollY;const ol=$("#ordlist",host);ol.outerHTML=body(it).replace(/^<p class="ordhint">.*?<\/p>/,"");draw2bind(it);window.scrollTo({top:y});
+    if(focusK!=null){const nb=$(`.mv[data-k="${focusK}"][data-dir="${dir}"]`,host)||$(`.mv[data-k="${focusK}"]`,host);if(nb)nb.focus();}}
+  function bindDrag(it){ // pointer-based drag reordering: mouse anywhere on the row, touch on the grip
+    const ol=$("#ordlist",host);if(!ol)return;
+    $$("li",ol).forEach(li=>li.onpointerdown=e=>{
+      if(it.locked||e.button>0||e.target.closest(".mv"))return;
+      if(e.pointerType!=="mouse"&&!e.target.closest(".grip"))return;
+      e.preventDefault();
+      const items=$$("li",ol);const from=items.indexOf(li);
+      const rects=items.map(x=>{const r=x.getBoundingClientRect();return {top:r.top+window.scrollY,h:r.height};});
+      const gap=items.length>1?rects[1].top-rects[0].top-rects[0].h:6;const step=rects[from].h+gap;
+      const startY=e.clientY+window.scrollY;let to=from;let raf=0;
+      li.classList.add("dragging");items.forEach(x=>{if(x!==li)x.classList.add("shift");});
+      try{li.setPointerCapture(e.pointerId);}catch(_){}
+      const move=ev=>{
+        const vy=ev.clientY;if(vy<70)window.scrollBy(0,-10);else if(vy>window.innerHeight-70)window.scrollBy(0,10);
+        const dy=vy+window.scrollY-startY;li.style.transform=`translateY(${dy}px)`;
+        const center=rects[from].top+rects[from].h/2+dy;let t=0;
+        rects.forEach((r,i)=>{if(i!==from&&center>r.top+r.h/2)t++;});
+        // t = number of other items above the dragged centre → new index
+        if(t!==to){to=t;cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>items.forEach((x,i)=>{if(i===from)return;let sh=0;if(from<to&&i>from&&i<=to)sh=-step;if(from>to&&i<from&&i>=to)sh=step;x.style.transform=sh?`translateY(${sh}px)`:"";}));}
+      };
+      const up=()=>{li.removeEventListener("pointermove",move);li.removeEventListener("pointerup",up);li.removeEventListener("pointercancel",up);
+        cancelAnimationFrame(raf);
+        if(to!==from){const [m]=it.cur.splice(from,1);it.cur.splice(to,0,m);}
+        redrawOrder(it);
+        const moved=$$("#ordlist li",host)[to];if(moved&&to!==from){moved.classList.add("dropped");setTimeout(()=>moved.classList.remove("dropped"),500);}};
+      li.addEventListener("pointermove",move);li.addEventListener("pointerup",up);li.addEventListener("pointercancel",up);
+    });
+  }
   function draw2bind(it){ // rebind order buttons after reorder
-    $$(".mv",host).forEach(b=>b.onclick=()=>{const k=+b.dataset.k,j=k+ +b.dataset.dir;[it.cur[k],it.cur[j]]=[it.cur[j],it.cur[k]];const y=window.scrollY;$("#ordlist",host).outerHTML=body(it);draw2bind(it);window.scrollTo({top:y});const nb=$(`.mv[data-k="${j}"][data-dir="${b.dataset.dir}"]`,host)||$(`.mv[data-k="${j}"]`,host);if(nb)nb.focus();});
+    bindDrag(it);
+    $$(".mv",host).forEach(b=>b.onclick=()=>{const k=+b.dataset.k,j=k+ +b.dataset.dir;[it.cur[k],it.cur[j]]=[it.cur[j],it.cur[k]];redrawOrder(it,j,b.dataset.dir);});
   }
   function grade(it,given){
     if(it.type==="single")return given===it.ans;
@@ -256,7 +287,7 @@ function runQuiz(host,items,cfg){
       const good=it.type==="single"?[it.ans]:it.correct;const chosen=it.type==="single"?[given]:given;
       $$(".opt",host).forEach(b=>{b.disabled=true;const t=it.shuffled[+b.dataset.k];if(good.includes(t))b.classList.add("right");else if(chosen.includes(t))b.classList.add("wrong");});
     }
-    if(it.type==="order"){$$(".mv",host).forEach(b=>b.disabled=true);$$("#ordlist li",host).forEach((li,k)=>li.classList.add(it.cur[k]===it.items[k]?"right":"wrong"));}
+    if(it.type==="order"){it.locked=true;$("#ordlist",host).classList.add("locked");$$(".mv",host).forEach(b=>b.disabled=true);$$("#ordlist li",host).forEach((li,k)=>li.classList.add(it.cur[k]===it.items[k]?"right":"wrong"));}
     if(it.type==="hot"){$$(".hz",host).forEach(g=>{g.onclick=null;g.onkeydown=null;g.classList.add("done");if(g.dataset.z===it.ans)g.classList.add("right");else if(g.dataset.z===given)g.classList.add("wrong");});}
     if(it.type==="match"){$$("select",host).forEach((s,k)=>{s.disabled=true;s.closest(".mrow").classList.add(s.value===it.pairs[k][1]?"right":"wrong");});}
     const sub=$("#submit",host);if(sub)sub.remove();
