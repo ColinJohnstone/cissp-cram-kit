@@ -60,3 +60,12 @@ python3 scripts/build.py
 ## Hosting
 
 Served with GitHub Pages from the repository root (`index.html`).
+
+## Writing questions
+
+Keep them exam-like:
+
+- Make all four options similar in length and detail. The correct answer should be the longest option only about 1 time in 4.
+- Every distractor should be plausible to someone who half-knows the topic.
+- Use FIRST, BEST, MOST and LEAST in the stem when more than one option is technically true.
+- Never use "all of the above" or "none of the above".

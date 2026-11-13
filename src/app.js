@@ -965,6 +965,7 @@ const LINKS=[
  ["Official","ISC2 CISSP exam outline","https://www.isc2.org/certifications/cissp/cissp-exam-outline","Domains and weights; the source of truth for what's tested."],
  ["Official","ISC2 exam day guide","https://www.isc2.org/exams/exam-day","Check-in, ID, breaks and test centre rules. Read this the week of your exam."],
  ["Official","ISC2 CISSP certification page","https://www.isc2.org/certifications/cissp","Experience requirements, endorsement and maintenance."],
+ ["Practice","Destination Certification free practice questions","https://destcert.com/cissp-practice-questions-guide/","Free questions across all 8 domains with explanations, written in exam style."],
  ["Video","Destination Certification MindMaps (free)","https://destcert.com/cissp-mindmaps/","30 short videos that map each domain; great for a final pass."],
  ["Video","Destination Certification on YouTube","https://www.youtube.com/c/DestinationCertification/","The MindMaps plus exam-strategy videos."],
  ["Video","CISSP Exam Cram — Pete Zerger","https://www.youtube.com/results?search_query=CISSP+Exam+Cram+full+course+Inside+Cloud+and+Security","Full-course cram on the Inside Cloud and Security channel (opens a YouTube search)."],
