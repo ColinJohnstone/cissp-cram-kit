@@ -19,7 +19,7 @@ const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}};
 // Each style is a full design system: tokens + component rules live in the stylesheet under :root[data-skin="…"].
 const GF="https://fonts.googleapis.com/css2?";
 const THEMES=[
- {id:"system",name:"Minimal",desc:"Clean and quiet; follows your device's light or dark mode",p:{bg:"linear-gradient(135deg,#ffffff 50%,#111315 50%)",ink:"#111418",accent:"#2448e0",bd:"1px solid #cfd3da",r:"8px",sh:"none",font:"'Chakra Petch',sans-serif"}},
+ {id:"system",name:"Minimal",desc:"Clean and quiet",p:{bg:"linear-gradient(135deg,#ffffff 50%,#111315 50%)",ink:"#111418",accent:"#2448e0",bd:"1px solid #cfd3da",r:"8px",sh:"none",font:"'Chakra Petch',sans-serif"}},
  {id:"swiss",name:"Swiss",desc:"Bold grotesque type, strict grid, thick rules, one red accent",fonts:"family=Inter+Tight:wght@400;500;600;700;800",p:{bg:"#ffffff",ink:"#111",accent:"#e30613",bd:"3px solid #111",r:"0",sh:"none",font:"'Inter Tight',sans-serif",w:800}},
  {id:"brutal",name:"Neo-brutalist",desc:"Chunky type, thick borders, hard offset shadows, loud colour",fonts:"family=Archivo+Black&family=Work+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700",p:{bg:"#e9e4ff",ink:"#111",accent:"#ff5c35",bd:"3px solid #111",r:"8px",sh:"4px 4px 0 #111",font:"'Archivo Black',sans-serif"}},
  {id:"editorial",name:"Editorial",desc:"Magazine serif, drop caps, double rules, roomy reading",fonts:"family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500;1,9..144,600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400",p:{bg:"#f5f2eb",ink:"#1d1a16",accent:"#8c1c13",bd:"1px solid #a99f8b",r:"2px",sh:"none",font:"'Fraunces',serif",it:1}},
@@ -44,15 +44,28 @@ function swatchHTML(sel){
           <i style="background:${p.accent};border-radius:${p.r==="0"?"0":"999px"};${x.id==="brutal"?"border:2px solid #111;":""}"></i></span></span>
       <span class="swname">${esc(x.name)}</span></button>`;}).join("")}</div>`;
 }
-function bindSwatches(host,onPick){$$(".sw",host).forEach(b=>b.onclick=()=>{const id=b.dataset.skin;S.skin=id;save();applySkin(id);$$(".sw",host).forEach(x=>{x.classList.toggle("on",x===b);x.setAttribute("aria-checked",x===b);});const d=$(".swdesc",host);if(d)d.textContent=THEMES.find(t=>t.id===id).desc;if(onPick)onPick(id);});}
-applySkin(S.skin);
+function bindSwatches(host,onPick){$$(".sw",host).forEach(b=>b.onclick=()=>{const id=b.dataset.skin;S.skin=id;save();applySkin(id);applyMode();$$(".sw",host).forEach(x=>{x.classList.toggle("on",x===b);x.setAttribute("aria-checked",x===b);});const d=$(".swdesc",host);if(d)d.textContent=THEMES.find(t=>t.id===id).desc;if(onPick)onPick(id);});}
+/* light / dark appearance, for every style */
+const APPEARANCE=[["auto","Match device"],["light","Light"],["dark","Dark"]];
+if(!S.mode)S.mode=S.skin==="light"||S.skin==="paper"?"light":S.skin==="dark"||S.skin==="midnight"?"dark":"auto";
+const darkMQ=window.matchMedia?window.matchMedia("(prefers-color-scheme: dark)"):null;
+function applyMode(){
+  const m=S.mode==="light"||S.mode==="dark"?S.mode:(darkMQ&&darkMQ.matches?"dark":"light");
+  const root=document.documentElement;root.dataset.mode=m;root.dataset.theme=m;
+  const meta=document.querySelector('meta[name="theme-color"]');
+  if(meta)requestAnimationFrame(()=>{const bg=getComputedStyle(document.body).backgroundColor;if(bg&&!/rgba\(0, 0, 0, 0\)/.test(bg))meta.setAttribute("content",bg);});
+}
+if(darkMQ){const f=()=>{if(S.mode==="auto")applyMode();};darkMQ.addEventListener?darkMQ.addEventListener("change",f):darkMQ.addListener(f);}
+function modeHTML(){return `<div class="modeseg"><span>Appearance</span>${segHTML("appmode",APPEARANCE,S.mode||"auto")}</div>`;}
+function bindMode(host){bindSeg(host,"appmode",v=>{S.mode=v;save();applyMode();});}
+applySkin(S.skin);applyMode();
 function openThemePicker(btn){
   const ex=$("#themepop");if(ex){ex.remove();return;}
   THEMES.forEach(ensureFonts);
   const cur=LEGACY_SKIN[S.skin]||S.skin||"system";
   const pop=document.createElement("div");pop.id="themepop";pop.className="themepop";pop.setAttribute("role","dialog");pop.setAttribute("aria-label","Design style");
-  pop.innerHTML=`<div class="tphead"><b>Design style</b><button class="chip" id="tpclose">Done</button></div>${swatchHTML(cur)}<p class="swdesc">${esc(THEMES.find(t=>t.id===cur).desc)}</p>`;
-  document.body.appendChild(pop);bindSwatches(pop);$("#tpclose").onclick=()=>pop.remove();
+  pop.innerHTML=`<div class="tphead"><b>Design style</b><button class="chip" id="tpclose">Done</button></div>${swatchHTML(cur)}<p class="swdesc">${esc(THEMES.find(t=>t.id===cur).desc)}</p>${modeHTML()}`;
+  document.body.appendChild(pop);bindSwatches(pop);bindMode(pop);$("#tpclose").onclick=()=>pop.remove();
   const onDoc=e=>{if(!pop.contains(e.target)&&e.target!==btn){pop.remove();document.removeEventListener("click",onDoc,true);}};
   setTimeout(()=>document.addEventListener("click",onDoc,true),0);
   const k=e=>{if(e.key==="Escape"){pop.remove();document.removeEventListener("keydown",k);}};document.addEventListener("keydown",k);
@@ -519,7 +532,7 @@ function openSetup(first){
      ()=>`<p class="obstep">Step 1 of 3</p><h2 id="obTitle">${first?"Welcome to CISSPrep":"Your setup"}</h2>
        <p class="lede" style="margin-bottom:18px">Your CISSP study guide: cheat sheets, acronym and regulator drills, quizzes and timed practice tests. Three quick questions and it builds a study plan around your exam date.</p>
        <label class="field" for="obName"><span>What should we call you?</span><input id="obName" type="text" autocomplete="given-name" maxlength="40" placeholder="First name (optional)" value="${esc(draft.name)}"></label>
-       <div class="field" style="margin-top:18px"><span>Pick a design style</span>${swatchHTML(S.skin||"system")}<p class="swdesc">${esc((THEMES.find(t=>t.id===(LEGACY_SKIN[S.skin]||S.skin||"system"))||THEMES[0]).desc)}</p></div>`,
+       <div class="field" style="margin-top:18px"><span>Pick a design style</span>${swatchHTML(S.skin||"system")}<p class="swdesc">${esc((THEMES.find(t=>t.id===(LEGACY_SKIN[S.skin]||S.skin||"system"))||THEMES[0]).desc)}</p>${modeHTML()}</div>`,
      ()=>`<p class="obstep">Step 2 of 3</p><h2 id="obTitle">When is your exam?</h2>
        <p class="lede" style="margin-bottom:18px">The plan spreads all 8 domains across the days you have left, with a full practice test near the end and a light day before.</p>
        <label class="field" for="obDate"><span>Exam date</span><input id="obDate" type="date" min="${minDate}" value="${esc(draft.date)}"></label>
@@ -532,7 +545,7 @@ function openSetup(first){
     ];
     ov.innerHTML=`<div class="obbox"><div class="obbody">${steps[step]()}</div>
       <div class="row obnav">${step>0?`<button class="btn ghost" id="obBack">Back</button>`:first?`<button class="btn ghost" id="obSkip">Skip for now</button>`:`<button class="btn ghost" id="obCancel">Cancel</button>`}<span style="flex:1"></span><span class="obdots">${[0,1,2].map(i=>`<i class="${i===step?"on":""}"></i>`).join("")}</span><button class="btn" id="obNext">${step<2?"Next":"Build my plan"}</button></div></div>`;
-    THEMES.forEach(ensureFonts);bindSwatches(ov);
+    THEMES.forEach(ensureFonts);bindSwatches(ov);bindMode(ov);
     const nm=$("#obName",ov);if(nm){nm.oninput=e=>draft.name=e.target.value.trim();nm.focus();nm.onkeydown=e=>{if(e.key==="Enter")$("#obNext",ov).click();};}
     const dt=$("#obDate",ov);if(dt){dt.onchange=dt.oninput=e=>draft.date=e.target.value;dt.focus();}
     $$("[data-f]",ov).forEach(c=>c.onchange=()=>{const id=+c.dataset.f;c.checked?draft.focus.add(id):draft.focus.delete(id);});
@@ -1240,7 +1253,7 @@ function loadProgressCode(code){
   const c=code.trim();if(!c.startsWith("CCK1."))throw new Error("That doesn't look like a progress code. It should start with CCK1.");
   const obj=JSON.parse(decodeURIComponent(escape(atob(c.slice(5)))));
   if(typeof obj!=="object"||!obj.q)throw new Error("The code is incomplete. Copy the whole code and try again.");
-  S=Object.assign({q:{},cards:{},exams:[],drill:{},dump:{},custom:[]},obj);save();applySkin(S.skin);syncCustom();
+  S=Object.assign({q:{},cards:{},exams:[],drill:{},dump:{},custom:[]},obj);save();applySkin(S.skin);applyMode();syncCustom();
 }
 
 /* ---------- global search ---------- */

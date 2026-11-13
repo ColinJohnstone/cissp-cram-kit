@@ -6,7 +6,7 @@ A single-page study site for the CISSP exam (ISC2 outline effective April 15, 20
 
 - **Setup** – first visit asks for a name, design style, exam date and focus areas (editable any time)
 - **Navigation** – Plan · Learn (Cheat Sheet, Acronyms, Laws & Bodies, Models) · Practice (Quiz, Drills, Practice Test, Flashcards, Brain Dump) · Exam Day. Every practice mode uses the same setup panel and opens a focused session
-- **Design styles** – eight full looks, each with its own type, layout treatment, borders and buttons: Minimal, Swiss, Neo-brutalist, Editorial, Terminal, Glass, Blueprint, High contrast (header → Style)
+- **Design styles** – eight full looks, each with its own type, layout treatment, borders and buttons: Minimal, Swiss, Neo-brutalist, Editorial, Terminal, Glass, Blueprint, High contrast (header → Style). Every style has a light and dark version: Appearance can match your device or be set to Light or Dark
 - **Plan** – study plan generated from your exam date and focus areas (daily, or weekly if 3+ weeks out), domain mastery, "think like a manager" rules
 - **Cheat Sheet** – highest-yield facts for all 8 domains, plus formulas and memory aids
 - **Acronyms** – ~420 acronyms tagged by domain, with commonly confused pairs
