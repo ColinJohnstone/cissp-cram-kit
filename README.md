@@ -14,7 +14,9 @@ A single-page study site for the CISSP exam (ISC2 outline effective April 15, 20
 - **Models & Mnemonics** – 46 ordered models (OSI, RMF, IR, kill chain, EALs…) with mnemonics and "Test me" ordering drills
 - **Drills** – acronym rounds with same-initials decoys, look-alike acronyms, redacted law/body/standard questions, generated calculations (SLE/ALE/ARO, safeguard value, RTO/MTD, availability, key counts, backup restores) and "Which key?" crypto scenarios
 - **Domain Quiz** – 194 scenario questions, 51 BEST/FIRST manager-mindset questions (with why the runner-up loses), multi-select, ordering, matching and hotspot (click-the-diagram) items, plus **Smart review** that targets misses, weak and focus domains
-- **Practice Test** – timed, domain-weighted, forward-only like the CAT
+- **Practice Test** – timed, domain-weighted, forward-only like the CAT. Fixed length, or **adaptive**: items are tagged easy/medium/hard, difficulty follows your answers, and the test stops once it's 95% sure you're above or below a practice passing line, then shows an ability estimate and a rough scaled score
+- **Pacing coach** – on-pace/behind indicator beside the timer and a pacing breakdown after each test (average per question, slowest questions, second-half slowdown)
+- **My Questions** – import your own questions (CSV or JSON) into this browser; they join quizzes, smart review and tests. Only import questions you have the right to use, never exam dumps
 - **History** – every quiz, drill, smart review and practice test is recorded: score-over-time chart, average/best/last/trend, per-domain breakdown and session list (filterable by drill or mode)
 - **Deep links** – plan items open the exact spot: a domain's cheat-sheet section, a ready-started domain quiz or drill; search results have "Open →" links
 - **Brain Dump** – write formulas, ports and models from memory; auto-checks what you got and whether it's in order; 10-minute timer

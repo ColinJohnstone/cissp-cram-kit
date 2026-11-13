@@ -1,7 +1,7 @@
 // CISSPrep service worker: makes the site installable and usable offline.
 // Pages: network first (so updates arrive), cached copy when offline.
 // Icons and fonts: cache first.
-const CACHE = "cissprep-v3";
+const CACHE = "cissprep-v4";
 const CORE = ["./", "./index.html", "./manifest.webmanifest", "./favicon.svg", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/apple-touch-icon.png"];
 
 self.addEventListener("install", e => {

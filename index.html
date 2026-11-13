@@ -375,6 +375,47 @@ a.hlink:hover .hlabel{color:var(--accent)}
   .hist>div>span:last-child{display:none}
 }
 
+/* ---------- pacing, adaptive result, my questions ---------- */
+button.btn.small{font-size:13px;padding:6px 12px}
+button.btn.danger{color:var(--bad);border-color:var(--bad)}
+label.filebtn{display:inline-block;font:inherit;font-weight:600;font-size:13px;padding:6px 12px;border-radius:8px;border:1px solid var(--line-2);color:var(--ink);cursor:pointer}
+label.filebtn:hover{border-color:var(--ink)}
+.tclock{display:inline-flex;align-items:center;gap:10px}
+.pace{font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--ink-2);white-space:nowrap}
+.pace.on{color:var(--good);border-color:var(--good)}
+.pace.ahead{color:var(--accent);border-color:var(--accent)}
+.pace.behind{color:var(--bad);border-color:var(--bad);background:var(--bad-soft)}
+.catbox{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.catnums{display:flex;flex-wrap:wrap;gap:12px 32px;margin-bottom:6px}
+.catnums dt{font-size:12px;color:var(--ink-3)}
+.catnums dd{margin:0;font-family:var(--display);font-weight:700;font-size:26px;font-variant-numeric:tabular-nums}
+.catnums dd small{font-size:13px;font-weight:500;color:var(--ink-3)}
+.catg{width:100%;max-width:640px;height:auto;display:block}
+.catg .trk{fill:var(--surface-2,var(--line))}
+.catg .band{opacity:.28}.catg .band.ok,.catg .me.ok{fill:var(--good)}.catg .band.no,.catg .me.no{fill:var(--bad)}
+.catg .me{stroke:var(--bg);stroke-width:2}
+.catg .cut{stroke:var(--ink);stroke-width:2;stroke-dasharray:4 3}
+.catg .ax{fill:var(--ink-3);font:11px var(--mono)}
+.pchart rect.ok{fill:var(--good)}.pchart rect.over{fill:#c98a00}.pchart rect.slow{fill:var(--bad)}
+.howcat summary{cursor:pointer}
+.howcat p{font-size:14px;line-height:1.6;margin:10px 0 0}
+.card.note{border-left:4px solid var(--accent);padding:12px 16px !important;font-size:14px;line-height:1.55}
+.imptxt{width:100%;font-family:var(--mono);font-size:13px;line-height:1.5;padding:10px 12px;border-radius:8px;border:1px solid var(--line-2);background:var(--bg);color:var(--ink);resize:vertical;box-sizing:border-box}
+.imptxt:focus{outline:none;border-color:var(--accent)}
+#impDef{font:inherit;font-size:14px;max-width:100%;padding:7px 8px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+#impPrev:not(:empty){padding:0 20px 8px}
+.imperr{font-size:13px;color:var(--bad);margin:8px 0}
+.imperr ul{margin:4px 0 0;padding-left:18px}
+.impprev{display:grid;gap:10px;margin:8px 0}
+.ipq{border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:14px}
+.ipq ol{margin:6px 0;padding-left:22px}
+.ipq li.ok{color:var(--good);font-weight:600}
+.minelist{margin:0;padding-left:22px}
+.minelist li{padding:10px 0;border-top:1px solid var(--line);font-size:14px}
+.minelist li:first-child{border-top:0}
+.minelist li>div{display:inline-block;width:calc(100% - 80px);vertical-align:top}
+.minelist li>.chip{float:right}
+
 /* ===================== DESIGN STYLES ===================== */
 /* ---------- Swiss: International Typographic Style ---------- */
 :root[data-skin="swiss"]{--bg:#ffffff;--surface:#ffffff;--surface-2:#f1f1f1;--line:#111;--line-2:#111;--ink:#111;--ink-2:#2a2a2a;--ink-3:#5c5c5c;--accent:#e30613;--accent-ink:#fff;--accent-soft:#fde8e9;--good:#0a7a3d;--good-soft:#e5f3eb;--bad:#e30613;--bad-soft:#fde8e9;--mark:#ffe14d;--display:"Inter Tight",Inter,Arial,sans-serif;--body:"Inter Tight",Inter,Arial,sans-serif;color-scheme:light}
@@ -2047,6 +2088,114 @@ const QS=[...QUESTIONS.map((q,i)=>({id:"q"+i,d:q[0],type:"single",q:q[1],ans:q[2
   ...HOTSPOT.map((h,i)=>({id:"h"+i,d:h.d,type:"hot",dia:h.dia,q:h.q,ans:h.ans,ex:h.ex})),
   ...MODEL_ITEMS];
 
+/* ---------- difficulty ---------- */
+// easy / medium / hard, used by the adaptive test. A heuristic on item type and wording;
+// imported questions can set their own.
+const QUAL=/\b(FIRST|BEST|MOST|PRIMARY|MAIN|LEAST|GREATEST|NEXT)\b/;
+const LVLS=["easy","medium","hard"];const LVB={easy:-1,medium:0,hard:1};
+function levelOf(q){
+  if(q.best||q.type==="multi")return "hard";
+  if(q.type==="order")return q.items.length>=7?"hard":"medium";
+  if(q.type==="match"||q.type==="hot")return "medium";
+  const st=q.q.length,avg=q.opts.reduce((a,o)=>a+o.length,0)/q.opts.length;
+  if(QUAL.test(q.q))return st>140||avg>45?"hard":"medium";
+  if(st<110&&avg<34)return "easy";
+  return st>150?"hard":"medium";
+}
+QS.forEach(q=>q.lvl=levelOf(q));
+
+/* ---------- my questions (imported, stored only in this browser) ---------- */
+S.custom=S.custom||[];
+function syncCustom(){
+  for(let k=QS.length-1;k>=0;k--)if(QS[k].custom)QS.splice(k,1);
+  S.custom.forEach(c=>{const multi=c.correct&&c.correct.length>1;
+    const q={id:"c:"+c.k,d:c.d,custom:true,type:multi?"multi":"single",q:c.q,opts:c.opts,ex:c.ex||"",tag:"My question"};
+    if(multi)q.correct=c.correct;else q.ans=c.correct?c.correct[0]:c.opts[0];
+    q.lvl=LVLS.includes(c.lvl)?c.lvl:levelOf(q);QS.push(q);});
+}
+syncCustom();
+
+/* ---------- adaptive (CAT-style) test ---------- */
+// Rasch model: P(correct) = 1/(1+e^-(θ-b)), b = -1/0/+1 for easy/medium/hard.
+// θ is a MAP estimate (standard-normal prior). Stops once the 95% interval clears the passing line,
+// or at the maximum length. CUT is a practice passing line, not ISC2's.
+const CUT=0.5;
+const Pr=(t,b)=>1/(1+Math.exp(-(t-b)));
+function estTheta(resp){
+  let t=0;for(let k=0;k<30;k++){let g=-t,h=-1;resp.forEach(r=>{const p=Pr(t,r.b);g+=r.x-p;h-=p*(1-p);});const st=g/h;t=Math.max(-4,Math.min(4,t-st));if(Math.abs(st)<1e-5)break;}
+  let info=1;resp.forEach(r=>{const p=Pr(t,r.b);info+=p*(1-p);});return {th:t,se:1/Math.sqrt(info)};
+}
+const scaledOf=th=>Math.max(0,Math.min(1000,Math.round((700+(th-CUT)*200)/10)*10));
+const normCdf=z=>{const t=1/(1+0.2316419*Math.abs(z));const d=0.3989423*Math.exp(-z*z/2);const p=d*t*(0.3193815+t*(-0.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));return z>0?1-p:p;};
+function makeAdaptive(min,max,pool){
+  pool=pool||QS;const used=new Set();
+  const resp=log=>log.map(l=>({b:LVB[l.it.lvl]??0,x:l.ok?1:0}));
+  function pick(log){
+    const n=log.length;const {th}=estTheta(resp(log));
+    const cnt={};log.forEach(l=>cnt[l.it.d]=(cnt[l.it.d]||0)+1);
+    const doms=DOMAINS.map(d=>({d:d.id,def:d.w*(n+1)/100-(cnt[d.id]||0)})).sort((a,b)=>b.def-a.def||Math.random()-.5);
+    const adv=log.filter(l=>l.it.type!=="single").length;const wantAdv=adv<0.2*(n+1)-0.5;
+    const want=Math.max(-1,Math.min(1,Math.round(th+(Math.random()-.5)*0.6))); // a little jitter so tests differ
+    const lvOrder=[want,...[-1,0,1].filter(b=>b!==want).sort((a,b)=>Math.abs(a-want)-Math.abs(b-want))];
+    for(const {d} of doms)for(const b of lvOrder){
+      const c=pool.filter(q=>q.d===d&&!used.has(q.id)&&LVB[q.lvl]===b);if(!c.length)continue;
+      const pref=c.filter(q=>(q.type!=="single")===wantAdv);const q=sample(pref.length?pref:c,1)[0];used.add(q.id);return q;}
+    return null;
+  }
+  return {min,max,
+    first(){return pick([]);},
+    next(log){
+      const n=log.length;if(n>=max)return null;
+      if(n>=min){const {th,se}=estTheta(resp(log));if(Math.abs(th-CUT)>1.96*se)return null;}
+      return pick(log);},
+    summary(log,timeout){
+      const n=log.length;const {th,se}=estTheta(resp(log));const conf=normCdf((th-CUT)/se);
+      let pass=th>=CUT,how;
+      if(timeout&&n<min){pass=false;how=`Time ran out before the minimum ${min} questions. On the real exam that's an automatic fail.`;}
+      else if(n<min)how=`You ended after ${n} of the minimum ${min} questions, so this estimate is rough.`;
+      else if(n<max&&Math.abs(th-CUT)>1.96*se)how=`Stopped after ${n} questions: the test was 95% sure you're ${pass?"above":"below"} the passing line.`;
+      else how=`Went the full ${n} questions: you were close to the line, so the final estimate decided it.`;
+      return {n,th,se,conf,pass,scaled:scaledOf(th),how,verdict:pass?"Above the passing line":"Below the passing line",min,max};}
+  };
+}
+function catHTML(c){
+  const W=600,x=t=>Math.round(20+(Math.max(-3,Math.min(3,t))+3)*(W-40)/6);const lo=c.th-1.96*c.se,hi=c.th+1.96*c.se;
+  return `<div class="catbox"><div class="catnums"><div><dt>Estimated scaled score</dt><dd>${c.scaled}<small> / 1000</small></dd></div><div><dt>Chance you're above the line</dt><dd>${Math.round(c.conf*100)}%</dd></div><div><dt>Questions</dt><dd>${c.n}</dd></div></div>
+    <svg class="catg" viewBox="0 0 ${W} 74" role="img" aria-label="Ability estimate ${c.th.toFixed(2)} with 95% range, passing line at ${CUT}">
+      <rect x="20" y="26" width="${W-40}" height="10" rx="5" class="trk"/>
+      <rect x="${x(lo)}" y="22" width="${Math.max(4,x(hi)-x(lo))}" height="18" rx="9" class="band ${c.pass?"ok":"no"}"/>
+      <line x1="${x(CUT)}" x2="${x(CUT)}" y1="12" y2="50" class="cut"/><text x="${x(CUT)}" y="9" text-anchor="middle" class="ax">passing line</text>
+      <circle cx="${x(c.th)}" cy="31" r="7" class="me ${c.pass?"ok":"no"}"/>
+      ${[["Easy",-1],["Medium",0],["Hard",1]].map(([l,b])=>`<text x="${x(b)}" y="66" text-anchor="middle" class="ax">${l} items</text>`).join("")}
+    </svg>
+    <p class="muted" style="font-size:13px;margin:6px 0 0">${esc(c.how)} The dot is your ability estimate; the bar is its 95% range. The scaled score is a rough practice estimate on ISC2's 0–1000 scale (700 to pass), not a prediction of your real score.</p></div>`;
+}
+function paceHTML(log,target,timed){
+  const t=log.map(l=>l.secs||0);const tot=t.reduce((a,b)=>a+b,0);const avg=tot/t.length;
+  const slow=log.map((l,k)=>({l,k,s:t[k]})).filter(o=>o.s>2*target).sort((a,b)=>b.s-a.s);
+  const slowRight=slow.filter(o=>o.l.ok).length;
+  const half=Math.floor(log.length/2);const a1=t.slice(0,half).reduce((a,b)=>a+b,0)/Math.max(1,half),a2=t.slice(half).reduce((a,b)=>a+b,0)/Math.max(1,t.length-half);
+  const tips=[];
+  if(avg>target*1.1)tips.push(`You averaged ${Math.round(avg)}s against a ${Math.round(target)}s target. At that pace 150 questions would take ${fmtDur(Math.round(avg*150))} — over the 3-hour limit.`);
+  else if(avg<target*0.5)tips.push(`You're well under pace. Slow down a little on BEST/FIRST questions and read every option before choosing.`);
+  else tips.push(`Your average is inside the ${Math.round(target)}s target. 150 questions at this pace would take ${fmtDur(Math.round(avg*150))}.`);
+  if(slow.length)tips.push(`${slow.length} question${slow.length===1?"":"s"} took more than twice the target and you got ${slowRight} of them right. If you're stuck past about 2 minutes, eliminate what you can, pick the most managerial answer and move on.`);
+  if(log.length>=20&&a2>a1*1.3)tips.push(`You slowed down in the second half (${Math.round(a1)}s → ${Math.round(a2)}s). Fatigue is real on a 3-hour exam; take the optional break.`);
+  return `<div class="card"><h3>Pacing</h3><dl class="hstats"><div><dt>Average per question</dt><dd>${Math.round(avg)}s</dd></div><div><dt>Target</dt><dd>${Math.round(target)}s</dd></div><div><dt>Total</dt><dd>${fmtDur(Math.round(tot))}</dd></div><div><dt>Over 2× target</dt><dd>${slow.length}</dd></div></dl>
+    ${paceChart(t,target)}
+    <ul class="bl" style="margin-top:12px">${tips.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>
+    ${slow.length?`<h4 style="margin:14px 0 6px">Slowest questions</h4><ol class="review">${slow.slice(0,5).map(o=>`<li><b>${fmtDur(o.s)}</b> · ${o.l.ok?'<span style="color:var(--good)">right</span>':'<span style="color:var(--bad)">wrong</span>'} · Q${o.k+1}: ${esc(o.l.it.q.length>140?o.l.it.q.slice(0,137)+"…":o.l.it.q)}</li>`).join("")}</ol>`:""}</div>`;
+}
+function paceChart(t,target){
+  if(t.length<3)return "";const W=640,H=120,P={l:36,r:8,t:10,b:16};const mx=Math.max(target*2.5,...t);const bw=(W-P.l-P.r)/t.length;
+  const y=v=>P.t+(H-P.t-P.b)*(1-Math.min(v,mx)/mx);
+  return `<div class="hchartwrap"><svg class="hchart pchart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Seconds spent on each question; dashed line is the target">
+    ${t.map((s,k)=>`<rect x="${(P.l+k*bw+bw*0.15).toFixed(1)}" y="${y(s).toFixed(1)}" width="${Math.max(1,bw*0.7).toFixed(1)}" height="${(H-P.b-y(s)).toFixed(1)}" class="${s>2*target?"slow":s>target?"over":"ok"}"><title>Q${k+1}: ${s}s</title></rect>`).join("")}
+    <line x1="${P.l}" x2="${W-P.r}" y1="${y(target)}" y2="${y(target)}" class="tgt"/><text x="${P.l-6}" y="${y(target)+4}" class="ax" text-anchor="end">${Math.round(target)}s</text>
+    <text x="${P.l-6}" y="${H-P.b+4}" class="ax" text-anchor="end">0</text>
+  </svg></div>`;
+}
+
 /* ---------- confusable pairs ---------- */
 const PAIRS=[
  ["FAR vs FRR","<b>FAR</b> Type II: impostor in (worse). <b>FRR</b> Type I: good user out."],
@@ -2140,12 +2289,20 @@ function typeLabel(it){return it.type==="multi"?"Multi-select":it.type==="order"
 function runQuiz(host,items,cfg){
   let i=0,right=0;const log=[];let timerId=null;const exam=cfg.exam;const t0=Date.now();const timed=cfg.minutes>0;
   const end=timed?Date.now()+cfg.minutes*60000:0;
-  const order=items.map(it=>{const t=it.type||"single";const o={...it,type:t};
+  const ad=cfg.adaptive||null;const total=()=>ad?ad.max:order.length;
+  const pace=cfg.paceSecs||(timed?cfg.minutes*60/items.length:0);let qT0=Date.now();
+  const prep=it=>{const t=it.type||"single";const o={...it,type:t};
     if(t==="single"||t==="multi")o.shuffled=shuffle(it.opts);
     if(t==="order"){let s=shuffle(it.items);let g=0;while(s.join("|")===it.items.join("|")&&g++<10)s=shuffle(it.items);o.cur=s;}
     if(t==="match")o.rights=shuffle(it.pairs.map(p=>p[1]));
-    return o;});
-  function tick(){const el=$("#timer",host);if(!el)return;const left=Math.max(0,end-Date.now());const m=Math.floor(left/60000),s=Math.floor(left%60000/1000);el.textContent=`${m}:${String(s).padStart(2,"0")}`;el.classList.toggle("warn",left<5*60000);if(left<=0){clearInterval(timerId);finish(true);}}
+    return o;};
+  const order=items.map(prep);
+  function paceState(){ // seconds ahead (+) or behind (-) the target pace
+    const used=(Date.now()-t0)/1000;return log.length*pace-used+Math.min((Date.now()-qT0)/1000,pace);}
+  function tick(){const el=$("#timer",host);if(!el)return;const left=Math.max(0,end-Date.now());const m=Math.floor(left/60000),s=Math.floor(left%60000/1000);el.textContent=`${m}:${String(s).padStart(2,"0")}`;el.classList.toggle("warn",left<5*60000);
+    const pc=$("#pace",host);if(pc&&pace){const d=paceState();const st=d<-Math.max(60,pace)?"behind":d>Math.max(90,pace*1.5)?"ahead":"on";const mm=Math.round(Math.abs(d)/60);
+      pc.className="pace "+st;pc.textContent=st==="behind"?`Behind ${mm||1}m`:st==="ahead"?`Ahead ${mm}m`:"On pace";pc.title=`Target ${Math.round(pace)}s per question`;}
+    if(left<=0){clearInterval(timerId);finish(true);}}
   function body(it){
     if(it.type==="single"||it.type==="multi")return `<div class="opts" role="${it.type==="multi"?"group":"radiogroup"}">${it.shuffled.map((o,k)=>`<button class="opt ${it.type==="multi"?"multi":""}" data-k="${k}" aria-pressed="false"><span class="k">${it.type==="multi"?'<span class="box"></span>':"ABCDEF"[k]}</span><span>${esc(o)}</span></button>`).join("")}</div>`;
     if(it.type==="order")return `<p class="ordhint">Drag the items into order, or use the arrows.</p><ol class="ordlist" id="ordlist">${it.cur.map((x,k)=>`<li data-k="${k}"><span class="grip" aria-hidden="true"><svg viewBox="0 0 10 16" width="10" height="16"><circle cx="2.5" cy="3" r="1.5"/><circle cx="7.5" cy="3" r="1.5"/><circle cx="2.5" cy="8" r="1.5"/><circle cx="7.5" cy="8" r="1.5"/><circle cx="2.5" cy="13" r="1.5"/><circle cx="7.5" cy="13" r="1.5"/></svg></span><span class="ordtxt">${esc(x)}</span><span class="ordbtns"><button class="mv" data-dir="-1" data-k="${k}" aria-label="Move up" ${k===0?"disabled":""}>↑</button><button class="mv" data-dir="1" data-k="${k}" aria-label="Move down" ${k===it.cur.length-1?"disabled":""}>↓</button></span></li>`).join("")}</ol>`;
@@ -2153,11 +2310,11 @@ function runQuiz(host,items,cfg){
     if(it.type==="match")return `<div class="matchgrid">${it.pairs.map((p,k)=>`<label class="mrow" for="m${k}"><span class="ml">${esc(p[0])}</span><select id="m${k}" data-k="${k}"><option value="">Choose…</option>${it.rights.map(r=>`<option>${esc(r)}</option>`).join("")}</select></label>`).join("")}</div>`;
   }
   function draw(){
-    const it=order[i];
+    const it=order[i];qT0=Date.now();
     const needSubmit=exam||it.type!=="single";
     host.innerHTML=`<div class="qcard">
-      <div class="progress"><i style="width:${100*i/order.length}%"></i></div>
-      <div class="qmeta"><span>Question ${i+1} of ${order.length}${it.d?` · Domain ${it.d}: ${esc(DNAME[it.d])}`:""}${it.tag?` · ${esc(it.tag)}`:""}${typeLabel(it)?` · <b class="qtype">${typeLabel(it)}</b>`:""}</span>${timed?`<span class="timer" id="timer"></span>`:""}${!exam?`<span class="tnum">${right} correct</span>`:""}</div>
+      <div class="progress"><i style="width:${100*i/total()}%"></i></div>
+      <div class="qmeta"><span>Question ${i+1}${ad?` · adaptive, ${ad.min}–${ad.max}`:` of ${order.length}`}${it.d?` · Domain ${it.d}: ${esc(DNAME[it.d])}`:""}${it.tag?` · ${esc(it.tag)}`:""}${typeLabel(it)?` · <b class="qtype">${typeLabel(it)}</b>`:""}</span>${timed?`<span class="tclock">${pace?`<span class="pace" id="pace"></span>`:""}<span class="timer" id="timer"></span></span>`:""}${!exam?`<span class="tnum">${right} correct</span>`:""}</div>
       <p class="qtext">${esc(it.q)}</p>
       ${body(it)}
       <div id="fb"></div>
@@ -2242,7 +2399,8 @@ function runQuiz(host,items,cfg){
   }
   function answer(given){
     const it=order[i];const ok=grade(it,given);if(ok)right++;
-    log.push({it,ok,given:givenText(it,given)});
+    log.push({it,ok,given:givenText(it,given),secs:Math.round((Date.now()-qT0)/1000)});
+    if(ad&&i===order.length-1){const nx=ad.next(log);if(nx)order.push(prep(nx));}
     if(it.id){const s=stat(it.id);s[ok?0:1]++;S.q[it.id]=s;save();}
     if(exam){i++;i<order.length?draw():finish(false);return;}
     // feedback
@@ -2256,29 +2414,33 @@ function runQuiz(host,items,cfg){
     const sub=$("#submit",host);if(sub)sub.remove();
     const showKey=it.type==="order"||it.type==="match"||it.type==="hot"||(it.type==="multi"&&!ok);
     $("#fb",host).innerHTML=`<div class="explain"><b class="${ok?"ok":"no"}">${ok?"Correct.":"Not quite."}</b> ${showKey&&!ok?`<div style="margin:6px 0"><b>Answer:</b> ${esc(ansText(it))}</div>`:""}${esc(it.ex||"")}</div>
-      <div class="row" style="margin-top:12px"><button class="btn" id="next">${i+1<order.length?"Next question →":"See results"}</button></div>`;
+      <div class="row" style="margin-top:12px"><button class="btn" id="next">${i+1<order.length?"Next question →":ad?"See your result":"See results"}</button></div>`;
     const nb=$("#next",host);nb.focus();nb.onclick=()=>{i++;i<order.length?draw():finish(false);};
   }
   function finish(timeout){
     clearInterval(timerId);
     const n=log.length;const pct=n?Math.round(100*right/n):0;
     const byDom={};log.forEach(l=>{const d=l.it.d||0;byDom[d]=byDom[d]||[0,0];byDom[d][l.ok?0:1]++;});
-    if(cfg.hist&&n)recordSession(cfg.hist,log,order.length,Math.round((Date.now()-t0)/1000));
+    const cat=ad&&n?ad.summary(log,timeout):null;
+    if(cfg.hist&&n)recordSession(cat?{...cfg.hist,label:`${cfg.hist.label} · est. ${cat.scaled}`,cat:{th:+cat.th.toFixed(2),se:+cat.se.toFixed(2),pass:cat.pass,scaled:cat.scaled}}:cfg.hist,log,ad?n:order.length,Math.round((Date.now()-t0)/1000));
+    const showPace=(exam||cfg.record)&&n>=5;
     const misses=log.filter(l=>!l.ok);
     host.innerHTML=`<div class="stack">
       <div class="card"><div class="row" style="align-items:flex-end;gap:18px">
         <div><h4>${timeout?"Time's up":"Result"}</h4><div class="score">${pct}%</div></div>
-        <div><div class="tnum">${right} of ${n} correct${n<order.length?` · ${order.length-n} unanswered`:""}</div>
-        ${(exam||cfg.record)?`<span class="verdict ${pct>=75?"pass":"fail"}">${pct>=75?"Exam-ready range":"Keep drilling"}</span>`:""}</div>
+        <div><div class="tnum">${right} of ${n} correct${!ad&&n<order.length?` · ${order.length-n} unanswered`:""}</div>
+        ${cat?`<span class="verdict ${cat.pass?"pass":"fail"}">${esc(cat.verdict)}</span>`:(exam||cfg.record)?`<span class="verdict ${pct>=75?"pass":"fail"}">${pct>=75?"Exam-ready range":"Keep drilling"}</span>`:""}</div>
       </div>
+      ${cat?catHTML(cat):""}
       ${Object.keys(byDom).some(k=>+k)?`<div class="mast" style="margin-top:16px">${Object.keys(byDom).filter(k=>+k).sort().map(d=>{const[r,w]=byDom[d];const p=Math.round(100*r/(r+w));return `<span class="dnum">${d}</span><div class="bar ${barClass(p)}"><i style="width:${p}%"></i></div><span class="tnum">${r}/${r+w}</span>`;}).join("")}</div>`:""}
-      ${(exam||cfg.record)?`<p class="muted" style="font-size:13px;margin:12px 0 0">Practice benchmark: aim for 75%+ on these to feel safe. The real exam is scaled (700/1000) and adaptive, so this isn't a direct conversion.</p>`:""}
+      ${(exam||cfg.record)&&!cat?`<p class="muted" style="font-size:13px;margin:12px 0 0">Practice benchmark: aim for 75%+ on these to feel safe. The real exam is scaled (700/1000) and adaptive, so this isn't a direct conversion.</p>`:""}
       <div class="row" style="margin-top:16px"><button class="btn" id="again">Go again</button>${misses.length?`<button class="btn ghost" id="redo">Retry the ${misses.length} I missed</button>`:""}${cfg.back?`<button class="btn ghost" id="toSetup">${esc(cfg.backLabel||"Back to setup")}</button>`:""}</div></div>
+      ${showPace?paceHTML(log,pace||72,timed):""}
       ${misses.length?`<div class="card"><h3>Review what you missed</h3><ol class="review">${misses.map(l=>`<li><b>${esc(l.it.q)}</b><br><span style="color:var(--bad)">Your answer: ${esc(l.given)}</span><br><span style="color:var(--good)">Correct: ${esc(ansText(l.it))}</span><br><span class="muted">${esc(l.it.ex||"")}</span></li>`).join("")}</ol></div>`:""}
     </div>`;
     $("#again",host).onclick=()=>cfg.again();
     const ts=$("#toSetup",host);if(ts)ts.onclick=()=>{cfg.back();window.scrollTo({top:0});};
-    const rd=$("#redo",host);if(rd)rd.onclick=()=>{stopActive=runQuiz(host,misses.map(l=>l.it),{...cfg,exam:false,minutes:0,record:false,hist:null});};
+    const rd=$("#redo",host);if(rd)rd.onclick=()=>{stopActive=runQuiz(host,misses.map(l=>l.it),{...cfg,exam:false,minutes:0,record:false,hist:null,adaptive:null,paceSecs:0});};
     if(cfg.scrollTop!==false)window.scrollTo({top:0});
   }
   draw();
@@ -2657,7 +2819,7 @@ function histChart(rows){
     ${pts.map((p,i)=>`<circle cx="${x(i).toFixed(1)}" cy="${y(p.pct).toFixed(1)}" r="${i===pts.length-1?5:3.5}" class="dot ${barClass(p.pct)}"><title>${esc(fmtWhen(p.t))} · ${p.pct}% (${p.right}/${p.n}) · ${esc(p.label)}</title></circle>`).join("")}
   </svg></div>`;
 }
-const HIST_SUBS={quiz:[["custom","Custom"],["smart","Smart review"],["misses","My misses"]],test:[["exam","Exam mode"],["study","Study mode"]],drill:null};
+const HIST_SUBS={quiz:[["custom","Custom"],["smart","Smart review"],["misses","My misses"]],test:[["cat","Adaptive"],["exam","Exam mode"],["study","Study mode"]],drill:null};
 function historyCard(kind,title){
   return `<section class="card histcard" id="hist-${kind}"><div class="row" style="justify-content:space-between;align-items:baseline"><h3 style="margin:0">${title}</h3><span class="tnum" id="histCount-${kind}"></span></div><div id="histBody-${kind}"></div></section>`;
 }
@@ -2714,8 +2876,9 @@ V.drill=()=>{
 };
 
 /* ---------- quiz view ---------- */
-const QTYPES=[["all","All types"],["best","BEST / FIRST"],["single","Multiple choice"],["multi","Multi-select"],["dnd","Order, match & hotspot"]];
-const typeOK=(q,t)=>t==="all"||(t==="dnd"?(q.type==="order"||q.type==="match"||q.type==="hot"):t==="best"?!!q.best:q.type===t);
+const QTYPES_BASE=[["all","All types"],["best","BEST / FIRST"],["single","Multiple choice"],["multi","Multi-select"],["dnd","Order, match & hotspot"]];
+const qtypes=()=>S.custom.length?[...QTYPES_BASE,["mine","My questions"]]:QTYPES_BASE;
+const typeOK=(q,t)=>t==="all"||(t==="mine"?!!q.custom:t==="dnd"?(q.type==="order"||q.type==="match"||q.type==="hot"):t==="best"?!!q.best:q.type===t);
 let pendingSmart=false,pendingStart=false;
 function quizPool(p){
   let pool=p.mode==="misses"?QS.filter(q=>stat(q.id)[1]>stat(q.id)[0]):QS;
@@ -2724,24 +2887,24 @@ function quizPool(p){
   return pool;
 }
 V.quiz=()=>{
-  const p=pref("quiz",{mode:"custom",doms:(prof().focus||[]).slice(0,1),type:"all",len:10});
+  const p=pref("quiz",{mode:"custom",doms:(prof().focus||[]).slice(0,1),type:"all",len:10});if(p.type==="mine"&&!S.custom.length)p.type="all";
   const missN=QS.filter(q=>stat(q.id)[1]>stat(q.id)[0]).length;
   const cnt=t=>QS.filter(q=>typeOK(q,t)&&(!p.doms.length||p.doms.includes(q.d))).length;
   app.innerHTML=`<div class="stack"><div><h2>Quiz</h2><p class="lede">${QS.length} questions: scenarios, BEST/FIRST manager-mindset items, multi-select, ordering, matching and hotspot. You get an explanation after every answer.</p></div>
    ${panelHTML("Set up a quiz","",[
      fRow("Mode",segHTML("qmode",[["custom","Custom"],["smart","Smart review"],["misses","My misses",missN,!missN]],p.mode),{hint:"Smart review picks from your misses, weak and focus domains"}),
      fRow("Domains",domPickHTML("qd",p.doms),{id:"qdRow"}),
-     fRow("Question types",`<div id="qtypes">${segHTML("qtype",QTYPES.map(t=>[t[0],t[1],cnt(t[0])]),p.type)}</div>`,{id:"qtRow"}),
+     fRow("Question types",`<div id="qtypes">${segHTML("qtype",qtypes().map(t=>[t[0],t[1],cnt(t[0])]),p.type)}</div>`,{id:"qtRow"}),
      fRow("Length",segHTML("qlen",[[10,"10"],[20,"20"],[30,"30"],[50,"50"]],p.len)),
    ],"Start quiz")}${historyCard("quiz","Quiz history")}</div>`;
   const upd=()=>{if(p.mode==="misses"&&!missN)p.mode="custom";const smart=p.mode==="smart";$("#qdRow").hidden=smart;$("#qtRow").hidden=smart;
-    $("#qtypes").innerHTML=segHTML("qtype",QTYPES.map(t=>[t[0],t[1],cnt(t[0])]),p.type);bindSeg(app,"qtype",v=>{p.type=v;upd();});
+    $("#qtypes").innerHTML=segHTML("qtype",qtypes().map(t=>[t[0],t[1],cnt(t[0])]),p.type);bindSeg(app,"qtype",v=>{p.type=v;upd();});
     const pool=quizPool(p);const n=Math.min(p.len,smart?QS.length:pool.length);
     $("#sum").textContent=smart?`${p.len} questions picked for you`:pool.length?`${n} questions · ${domSummary(p.doms)} · ${pool.length} available`:"Nothing matches. Widen the domains or types.";
     $("#go").disabled=!smart&&!pool.length;save();};
   bindSeg(app,"qmode",v=>{p.mode=v;upd();});bindDom(app,"qd",p.doms,upd);bindSeg(app,"qlen",v=>{p.len=+v;upd();});upd();
   const start=()=>{const smart=p.mode==="smart";const items=smart?smartPick(p.len):sample(quizPool(p),p.len);
-    session(smart?"Smart review":p.mode==="misses"?"My misses":`Quiz · ${domSummary(p.doms)}`,{label:"Quiz setup",go:V.quiz},h=>runQuiz(h,items,{again:start,back:V.quiz,backLabel:"Quiz setup",hist:{kind:"quiz",sub:p.mode,label:smart?"Smart review":p.mode==="misses"?"My misses":`${domSummary(p.doms).replace(/^all domains$/,"All domains")}${p.type!=="all"?` · ${QTYPES.find(t=>t[0]===p.type)[1]}`:""}`}}));};
+    session(smart?"Smart review":p.mode==="misses"?"My misses":`Quiz · ${domSummary(p.doms)}`,{label:"Quiz setup",go:V.quiz},h=>runQuiz(h,items,{again:start,back:V.quiz,backLabel:"Quiz setup",hist:{kind:"quiz",sub:p.mode,label:smart?"Smart review":p.mode==="misses"?"My misses":`${domSummary(p.doms).replace(/^all domains$/,"All domains")}${p.type!=="all"?` · ${qtypes().find(t=>t[0]===p.type)[1]}`:""}`}}));};
   $("#go").onclick=start;
   drawHistory("quiz");
   if(pendingSmart){pendingSmart=false;p.mode="smart";start();}
@@ -2750,20 +2913,31 @@ V.quiz=()=>{
 
 /* ---------- practice test view ---------- */
 const LENGTHS=[[25,30],[50,60],[100,120],[150,180]];
+const CATS=[["short",25,50,60,"Short: 25–50 questions · 60 min"],["full",100,150,180,"Full: 100–150 questions · 3 hours"]];
 V.exam=()=>{
-  const p=pref("exam",{len:50,feedback:"end",timer:"on"});
-  app.innerHTML=`<div class="stack"><div><h2>Practice Test</h2><p class="lede">Mixed domains, weighted like the real exam, with about 1 in 5 items multi-select, ordering, matching or hotspot. Timed at the real exam's pace of about 72 seconds per question.</p></div>
+  const p=pref("exam",{len:50,feedback:"end",timer:"on",fmt:"fixed",cat:"short"});if(!p.fmt)p.fmt="fixed";if(!p.cat)p.cat="short";
+  app.innerHTML=`<div class="stack"><div><h2>Practice Test</h2><p class="lede">Mixed domains, weighted like the real exam, with about 1 in 5 items multi-select, ordering, matching or hotspot. Timed at the real exam's pace of about 72 seconds per question, with a pacing coach beside the clock.</p></div>
    ${panelHTML("Set up a practice test","",[
-     fRow("Length",segHTML("elen",LENGTHS.map(l=>[l[0],`${l[0]} questions`]),p.len),{hint:"Real exam: 100–150"}),
+     fRow("Format",segHTML("efmt",[["fixed","Fixed length"],["cat","Adaptive (like the CAT)"]],p.fmt),{hint:"Adaptive gets harder or easier as you answer and stops once it's confident"}),
+     fRow("Length",segHTML("elen",LENGTHS.map(l=>[l[0],`${l[0]} questions`]),p.len),{id:"lenRow",hint:"Real exam: 100–150"}),
+     fRow("Length",segHTML("ecat",CATS.map(c=>[c[0],c[4]]),p.cat),{id:"catRow",hint:"The real CAT is 100–150"}),
      fRow("Answers",segHTML("efb",[["end","At the end (exam mode)"],["each","After each question (study mode)"]],p.feedback)),
      fRow("Timer",segHTML("etimer",[["on","On"],["off","Off"]],p.timer)),
    ],"Start test")}
+   <details class="card howcat"><summary><b>How the adaptive test works</b></summary>
+    <p>Every question is tagged easy, medium or hard. You start at medium. Get it right and the next one is harder; get it wrong and it's easier. After each answer the test re-estimates your ability, and once you've done the minimum it stops as soon as it's 95% sure whether you're above or below the passing line. Otherwise it runs to the maximum. That's the same idea as ISC2's CAT, so finishing early can mean either a clear pass or a clear fail.</p>
+    <p class="muted">Differences from the real thing: this question bank is much smaller, difficulty here is estimated from the question type and wording rather than calibrated on thousands of candidates, and the real exam includes 25 unscored trial questions. Treat the score as a trend, not a prediction.</p></details>
    ${historyCard("test","Practice test history")}</div>`;
-  const mins=()=>LENGTHS.find(l=>l[0]===p.len)[1];
-  const upd=()=>{$("#sum").textContent=`${p.len} questions${p.timer==="on"?` · ${mins()} minutes`:" · untimed"} · ${p.feedback==="end"?"forward-only, score at the end":"explanations as you go"}`;save();};
+  const cat=()=>CATS.find(c=>c[0]===p.cat);
+  const mins=()=>p.fmt==="cat"?cat()[3]:LENGTHS.find(l=>l[0]===p.len)[1];
+  const upd=()=>{const ad=p.fmt==="cat";$("#lenRow").hidden=ad;$("#catRow").hidden=!ad;
+    $("#sum").textContent=`${ad?`Adaptive, ${cat()[1]}–${cat()[2]} questions`:`${p.len} questions`}${p.timer==="on"?` · ${mins()} minutes`:" · untimed"} · ${p.feedback==="end"?"forward-only, score at the end":"explanations as you go"}`;save();};
+  bindSeg(app,"efmt",v=>{p.fmt=v;upd();});bindSeg(app,"ecat",v=>{p.cat=v;upd();});
   bindSeg(app,"elen",v=>{p.len=+v;upd();});bindSeg(app,"efb",v=>{p.feedback=v;upd();});bindSeg(app,"etimer",v=>{p.timer=v;upd();});upd();
-  const start=()=>{const items=weighted(p.len);
-    session(`Practice test · ${p.len} questions`,{label:"Test setup",go:V.exam},h=>runQuiz(h,items,{exam:p.feedback==="end",minutes:p.timer==="on"?mins():0,record:true,again:start,back:V.exam,backLabel:"Test setup",hist:{kind:"test",sub:p.feedback==="end"?"exam":"study",label:`${p.len} questions · ${p.feedback==="end"?"exam mode":"study mode"}${p.timer==="on"?"":" · untimed"}`}}));};
+  const start=()=>{const ad=p.fmt==="cat";const c=cat();
+    const A=ad?makeAdaptive(c[1],c[2]):null;const items=ad?[A.first()]:weighted(p.len);
+    const label=`${ad?`Adaptive ${c[1]}–${c[2]}`:`${p.len} questions`} · ${p.feedback==="end"?"exam mode":"study mode"}${p.timer==="on"?"":" · untimed"}`;
+    session(ad?`Adaptive test · ${c[1]}–${c[2]} questions`:`Practice test · ${p.len} questions`,{label:"Test setup",go:V.exam},h=>runQuiz(h,items,{exam:p.feedback==="end",minutes:p.timer==="on"?mins():0,paceSecs:p.timer==="on"?mins()*60/(ad?c[2]:p.len):72,adaptive:A,record:true,again:start,back:V.exam,backLabel:"Test setup",hist:{kind:"test",sub:ad?"cat":p.feedback==="end"?"exam":"study",label}}));};
   $("#go").onclick=start;
   drawHistory("test");
 };
@@ -2923,12 +3097,104 @@ V.dump=()=>{
     const tick=()=>{const l=Math.max(0,end-Date.now());el.textContent=`${Math.floor(l/60000)}:${String(Math.floor(l%60000/1000)).padStart(2,"0")}`;el.classList.toggle("warn",l<60000);if(!l){clearInterval(dumpTimer);el.textContent="Time's up — check your answers";}};tick();dumpTimer=setInterval(tick,1000);};
 };
 
+/* ---------- my questions: import ---------- */
+const IMPORT_TEMPLATE=`domain,question,A,B,C,D,answer,explanation,difficulty
+3,"Which cipher mode turns a block cipher into a stream cipher and needs a unique nonce?",ECB,CBC,CTR,"XTS",C,"CTR encrypts a counter to make a keystream.",medium
+1,"Which TWO are examples of risk transfer?","Buying cyber insurance","Outsourcing with indemnity clauses","Installing a firewall","Dropping the product line","A,B","Insurance and contractual indemnity move financial impact.",hard`;
+function parseCSV(text){
+  const rows=[];let row=[],f="",q=false;const d=text.includes("\t")&&!text.split("\n")[0].includes(",")?"\t":",";
+  for(let k=0;k<text.length;k++){const c=text[k];
+    if(q){if(c==='"'){if(text[k+1]==='"'){f+='"';k++;}else q=false;}else f+=c;continue;}
+    if(c==='"'&&f==="")q=true;else if(c===d){row.push(f);f="";}else if(c==="\n"||c==="\r"){if(c==="\r"&&text[k+1]==="\n")k++;row.push(f);f="";if(row.some(x=>x.trim()))rows.push(row);row=[];}else f+=c;}
+  row.push(f);if(row.some(x=>x.trim()))rows.push(row);return rows.map(r=>r.map(x=>x.trim()));
+}
+function domOf(v,def){if(v==null||v==="")return def;const m=String(v).match(/[1-8]/);if(m)return +m[0];const t=String(v).toLowerCase();const hit=DOMAINS.find(d=>d.name.toLowerCase().startsWith(t.slice(0,8)));return hit?hit.id:def;}
+function lvlOf(v){v=String(v||"").toLowerCase().trim();return v.startsWith("e")?"easy":v.startsWith("m")?"medium":v.startsWith("h")?"hard":"";}
+function normQ(o,def,line){ // -> {d,q,opts,correct,ex,lvl} or throws
+  const q=String(o.question||"").trim();if(!q)throw "missing question";
+  const opts=(o.options||[]).map(x=>String(x).trim()).filter(Boolean);if(opts.length<2)throw "needs at least 2 options";if(opts.length>6)throw "6 options at most";
+  if(new Set(opts).size!==opts.length)throw "two options are identical";
+  let ans=o.answer;const letters="ABCDEF";let idx=[];
+  if(typeof ans==="number")idx=[ans];
+  else if(Array.isArray(ans))idx=ans.map(a=>typeof a==="number"?a:letters.indexOf(String(a).trim().toUpperCase()));
+  else{const a=String(ans||"").trim();
+    if(/^[A-Fa-f]([\s,;/&+]*[A-Fa-f])*$/.test(a))idx=a.toUpperCase().replace(/[^A-F]/g,"").split("").map(c=>letters.indexOf(c));
+    else{const k=opts.findIndex(x=>x.toLowerCase()===a.toLowerCase());if(k>=0)idx=[k];}}
+  idx=[...new Set(idx)];
+  if(!idx.length||idx.some(k=>k<0||k>=opts.length))throw `answer "${ans??""}" doesn't match an option (use a letter like B, letters like A,C, or the option's text)`;
+  if(idx.length===opts.length)throw "every option is marked correct";
+  return {d:domOf(o.domain,def),q,opts,correct:idx.map(k=>opts[k]),ex:String(o.explanation||"").trim(),lvl:lvlOf(o.difficulty)};
+}
+function parseImport(text,def){
+  text=text.trim();const out=[],errs=[];if(!text)return {out,errs};
+  if(/^[\[{]/.test(text)){
+    let data;try{data=JSON.parse(text);}catch(e){return {out,errs:["That isn't valid JSON: "+e.message]};}
+    if(!Array.isArray(data))data=data.questions||[data];
+    data.forEach((o,k)=>{try{
+      if(Array.isArray(o))o={domain:o[0],question:o[1],options:o[2],answer:0,explanation:o[3]}; // [domain, question, [correct, ...wrong], explanation]
+      else o={domain:o.domain??o.d,question:o.question??o.q,options:o.options??o.opts??o.choices,answer:o.answer??o.correct??o.ans,explanation:o.explanation??o.ex,difficulty:o.difficulty??o.level};
+      out.push(normQ(o,def));}catch(e){errs.push(`Item ${k+1}: ${e}`);}});
+    return {out,errs};
+  }
+  const rows=parseCSV(text);let head=null;
+  if(rows.length&&rows[0].some(c=>/^question$/i.test(c)))head=rows.shift().map(c=>c.toLowerCase());
+  rows.forEach((r,k)=>{const line=k+(head?2:1);try{let o;
+    if(head){const g=n=>{const j=head.indexOf(n);return j>=0?r[j]:"";};
+      o={domain:g("domain"),question:g("question"),options:["a","b","c","d","e","f"].map(g),answer:g("answer")||g("correct"),explanation:g("explanation"),difficulty:g("difficulty")};}
+    else{ // domain, question, A, B, C, D, answer, explanation, difficulty
+      if(r.length<7)throw `expected at least 7 columns (domain, question, A–D, answer), found ${r.length}`;
+      o={domain:r[0],question:r[1],options:r.slice(2,6),answer:r[6],explanation:r[7],difficulty:r[8]};}
+    out.push(normQ(o,def));}catch(e){errs.push(`Line ${line}: ${e}`);}});
+  return {out,errs};
+}
+let importDraft=null;
+V.mine=()=>{
+  const p=pref("mine",{def:1});const n=S.custom.length;
+  app.innerHTML=`<div class="stack"><div><h2>My Questions</h2><p class="lede">Bring in questions from your own notes or a question bank you've paid for. They're saved only in this browser and mixed into the Quiz, Smart review, Practice Test and adaptive test, with the same history and stats.</p></div>
+   <div class="card note"><b>Only import questions you have the right to use.</b> Don't paste "brain dump" questions that claim to be from the live exam: using them breaks the ISC2 candidate agreement and can cost you the certification. They're often wrong, too. Free legitimate practice sets are linked under <a href="#examday">Exam Day → Resources</a>.</div>
+   <section class="setup"><div class="setup-head"><h3>Import questions</h3><p>Paste CSV (from a spreadsheet) or JSON, or open a file. Check the preview, then add them.</p></div>
+    <div class="frows">
+     ${fRow("Questions",`<textarea id="imp" class="imptxt" rows="9" spellcheck="false" placeholder="domain,question,A,B,C,D,answer,explanation,difficulty">${esc(importDraft||"")}</textarea>
+       <div class="row" style="margin-top:8px"><label class="btn ghost small filebtn">Open a file…<input type="file" id="impFile" accept=".csv,.tsv,.txt,.json" hidden></label><button class="btn ghost small" id="impTpl">Insert example</button></div>`,{hint:"CSV columns: domain, question, A, B, C, D (E, F optional), answer, explanation, difficulty. Answer is a letter (B), letters for multi-select (A,C), or the option text. A header row is optional."})}
+     ${fRow("Default domain",`<select id="impDef">${DOMAINS.map(d=>`<option value="${d.id}" ${p.def===d.id?"selected":""}>${d.id}. ${esc(d.name)}</option>`).join("")}</select>`,{hint:"Used when a row has no domain"})}
+    </div>
+    <div id="impPrev"></div>
+    <div class="setup-foot"><span class="summary" id="impSum">Paste questions to see a preview.</span><button class="btn" id="impGo" disabled>Add questions</button></div></section>
+   <section class="card"><div class="row" style="justify-content:space-between;align-items:baseline"><h3 style="margin:0">Your questions</h3><span class="tnum">${n} saved</span></div>
+    ${n?`<div class="row" style="margin:12px 0"><button class="btn small" id="quizMine">Quiz me on these</button><button class="btn ghost small" id="impExport">Download as JSON</button><button class="btn ghost small danger" id="impClear">Delete all</button></div>
+    <ol class="minelist">${S.custom.map((c,k)=>`<li><div><b>${esc(c.q)}</b><div class="muted" style="font-size:13px">Domain ${c.d} · ${c.correct.length>1?"multi-select · ":""}${c.lvl||levelOf(QS.find(q=>q.id==="c:"+c.k)||{q:c.q,opts:c.opts,type:"single"})} · answer: ${esc(c.correct.join(" · "))}</div></div><button class="chip" data-del="${k}" aria-label="Delete this question">Delete</button></li>`).join("")}</ol>`:`<p class="muted" style="margin:10px 0 0">None yet.</p>`}
+   </section></div>`;
+  const ta=$("#imp");let parsed={out:[],errs:[]};
+  const prev=()=>{importDraft=ta.value;parsed=parseImport(ta.value,p.def);const {out,errs}=parsed;
+    const dup=out.filter(o=>S.custom.some(c=>c.q===o.q)||QS.some(q=>!q.custom&&q.q===o.q)).length;
+    $("#impSum").textContent=ta.value.trim()?`${out.length} ready${errs.length?` · ${errs.length} with problems`:""}${dup?` · ${dup} already in the bank (will be skipped)`:""}`:"Paste questions to see a preview.";
+    $("#impGo").disabled=!out.length||out.length===dup;
+    $("#impGo").textContent=out.length-dup>0?`Add ${out.length-dup} question${out.length-dup===1?"":"s"}`:"Add questions";
+    $("#impPrev").innerHTML=(errs.length?`<div class="imperr"><b>Fix these and they'll be included:</b><ul>${errs.slice(0,8).map(e=>`<li>${esc(e)}</li>`).join("")}${errs.length>8?`<li>…and ${errs.length-8} more</li>`:""}</ul></div>`:"")+
+      (out.length?`<div class="impprev">${out.slice(0,3).map(o=>`<div class="ipq"><div class="muted" style="font-size:12px">Domain ${o.d}${o.lvl?` · ${o.lvl}`:""}</div><b>${esc(o.q)}</b><ol type="A">${o.opts.map(x=>`<li class="${o.correct.includes(x)?"ok":""}">${esc(x)}</li>`).join("")}</ol>${o.ex?`<div class="muted" style="font-size:13px">${esc(o.ex)}</div>`:""}</div>`).join("")}${out.length>3?`<p class="muted" style="font-size:13px;margin:0">…and ${out.length-3} more.</p>`:""}</div>`:"");};
+  let tmr;ta.oninput=()=>{clearTimeout(tmr);tmr=setTimeout(prev,250);};
+  $("#impDef").onchange=e=>{p.def=+e.target.value;save();prev();};
+  $("#impTpl").onclick=()=>{ta.value=(ta.value.trim()?ta.value.trim()+"\n":"")+IMPORT_TEMPLATE.split("\n").slice(ta.value.trim()?1:0).join("\n");prev();};
+  $("#impFile").onchange=e=>{const f=e.target.files[0];if(!f)return;if(f.size>2e6){$("#impSum").textContent="That file is over 2 MB.";return;}const r=new FileReader();r.onload=()=>{ta.value=String(r.result);prev();};r.readAsText(f);};
+  $("#impGo").onclick=()=>{const seen=new Set([...S.custom.map(c=>c.q),...QS.filter(q=>!q.custom).map(q=>q.q)]);let k0=Date.now();let added=0;
+    parsed.out.forEach(o=>{if(seen.has(o.q))return;seen.add(o.q);S.custom.push({k:(k0++).toString(36),...o});added++;});
+    save();syncCustom();importDraft=null;V.mine();$("#impSum").textContent=`Added ${added} question${added===1?"":"s"}.`;};
+  if(ta.value.trim())prev();
+  $$("[data-del]",app).forEach(b=>b.onclick=()=>{const c=S.custom[+b.dataset.del];S.custom.splice(+b.dataset.del,1);delete S.q["c:"+c.k];save();syncCustom();V.mine();});
+  const clr=$("#impClear");if(clr)clr.onclick=()=>{if(clr.dataset.sure){S.custom.forEach(c=>delete S.q["c:"+c.k]);S.custom=[];save();syncCustom();V.mine();}else{clr.dataset.sure=1;clr.textContent=`Tap again to delete all ${n}`;}};
+  const ex=$("#impExport");if(ex)ex.onclick=()=>{const data=S.custom.map(c=>({domain:c.d,question:c.q,options:c.opts,answer:c.correct.map(x=>"ABCDEF"[c.opts.indexOf(x)]).join(","),explanation:c.ex,difficulty:c.lvl||undefined}));
+    const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,1)],{type:"application/json"}));a.download="cissprep-my-questions.json";document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);};
+  const qm=$("#quizMine");if(qm)qm.onclick=()=>{S.prefs.quiz=Object.assign(S.prefs.quiz||{},{mode:"custom",doms:[],type:"mine"});save();location.hash="#quiz";};
+};
+
 /* ---------- exam day & resources ---------- */
 const LINKS=[
  ["Official","ISC2 CISSP exam outline","https://www.isc2.org/certifications/cissp/cissp-exam-outline","Domains and weights; the source of truth for what's tested."],
  ["Official","ISC2 exam day guide","https://www.isc2.org/exams/exam-day","Check-in, ID, breaks and test centre rules. Read this the week of your exam."],
  ["Official","ISC2 CISSP certification page","https://www.isc2.org/certifications/cissp","Experience requirements, endorsement and maintenance."],
  ["Practice","Destination Certification free practice questions","https://destcert.com/cissp-practice-questions-guide/","Free questions across all 8 domains with explanations, written in exam style."],
+ ["Practice","TechTarget CISSP practice exam questions","https://www.techtarget.com/cybersecurity/quiz/CISSP-practice-exam-questions-and-answers","Free sample questions from a McGraw Hill study guide (2020; needs a free newsletter sign-up)."],
+ ["Practice","ISC2 official training and exam prep","https://www.isc2.org/training","Paid self-paced and instructor-led courses from the exam's owner."],
  ["Video","Destination Certification MindMaps (free)","https://destcert.com/cissp-mindmaps/","30 short videos that map each domain; great for a final pass."],
  ["Video","Destination Certification on YouTube","https://www.youtube.com/c/DestinationCertification/","The MindMaps plus exam-strategy videos."],
  ["Video","CISSP Exam Cram — Pete Zerger","https://www.youtube.com/results?search_query=CISSP+Exam+Cram+full+course+Inside+Cloud+and+Security","Full-course cram on the Inside Cloud and Security channel (opens a YouTube search)."],
@@ -2978,7 +3244,7 @@ function loadProgressCode(code){
   const c=code.trim();if(!c.startsWith("CCK1."))throw new Error("That doesn't look like a progress code. It should start with CCK1.");
   const obj=JSON.parse(decodeURIComponent(escape(atob(c.slice(5)))));
   if(typeof obj!=="object"||!obj.q)throw new Error("The code is incomplete. Copy the whole code and try again.");
-  S=Object.assign({q:{},cards:{},exams:[],drill:{},dump:{}},obj);save();applySkin(S.skin);
+  S=Object.assign({q:{},cards:{},exams:[],drill:{},dump:{},custom:[]},obj);save();applySkin(S.skin);syncCustom();
 }
 
 /* ---------- global search ---------- */
@@ -3009,7 +3275,7 @@ $("#gsearch").addEventListener("input",e=>{clearTimeout(st);const q=e.target.val
 $("#gsearch").addEventListener("keydown",e=>{if(e.key==="Escape"&&e.target.value){e.target.value="";if(searching){searching=false;route(true);}}});
 
 /* ---------- navigation ---------- */
-const SECTIONS={learn:[["cheat","Cheat Sheet"],["acronyms","Acronyms",1],["regs","Laws & Bodies",1],["models","Models & Mnemonics"]],practice:[["quiz","Quiz"],["drill","Drills"],["exam","Practice Test"],["cards","Flashcards"],["dump","Brain Dump"]]};
+const SECTIONS={learn:[["cheat","Cheat Sheet"],["acronyms","Acronyms",1],["regs","Laws & Bodies",1],["models","Models & Mnemonics"]],practice:[["quiz","Quiz"],["drill","Drills"],["exam","Practice Test"],["cards","Flashcards"],["dump","Brain Dump"],["mine","My Questions"]]};
 const secOf=v=>v==="plan"?"plan":v==="examday"?"examday":SECTIONS.learn.some(x=>x[0]===v)?"learn":"practice";
 function drawNav(){
   const sec=secOf(currentView);if(sec==="learn"||sec==="practice"){S.prefs["last_"+sec]=currentView;save();}

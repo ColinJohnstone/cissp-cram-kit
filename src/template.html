@@ -359,6 +359,47 @@ a.hlink:hover .hlabel{color:var(--accent)}
   .hist>div>span:last-child{display:none}
 }
 
+/* ---------- pacing, adaptive result, my questions ---------- */
+button.btn.small{font-size:13px;padding:6px 12px}
+button.btn.danger{color:var(--bad);border-color:var(--bad)}
+label.filebtn{display:inline-block;font:inherit;font-weight:600;font-size:13px;padding:6px 12px;border-radius:8px;border:1px solid var(--line-2);color:var(--ink);cursor:pointer}
+label.filebtn:hover{border-color:var(--ink)}
+.tclock{display:inline-flex;align-items:center;gap:10px}
+.pace{font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--ink-2);white-space:nowrap}
+.pace.on{color:var(--good);border-color:var(--good)}
+.pace.ahead{color:var(--accent);border-color:var(--accent)}
+.pace.behind{color:var(--bad);border-color:var(--bad);background:var(--bad-soft)}
+.catbox{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.catnums{display:flex;flex-wrap:wrap;gap:12px 32px;margin-bottom:6px}
+.catnums dt{font-size:12px;color:var(--ink-3)}
+.catnums dd{margin:0;font-family:var(--display);font-weight:700;font-size:26px;font-variant-numeric:tabular-nums}
+.catnums dd small{font-size:13px;font-weight:500;color:var(--ink-3)}
+.catg{width:100%;max-width:640px;height:auto;display:block}
+.catg .trk{fill:var(--surface-2,var(--line))}
+.catg .band{opacity:.28}.catg .band.ok,.catg .me.ok{fill:var(--good)}.catg .band.no,.catg .me.no{fill:var(--bad)}
+.catg .me{stroke:var(--bg);stroke-width:2}
+.catg .cut{stroke:var(--ink);stroke-width:2;stroke-dasharray:4 3}
+.catg .ax{fill:var(--ink-3);font:11px var(--mono)}
+.pchart rect.ok{fill:var(--good)}.pchart rect.over{fill:#c98a00}.pchart rect.slow{fill:var(--bad)}
+.howcat summary{cursor:pointer}
+.howcat p{font-size:14px;line-height:1.6;margin:10px 0 0}
+.card.note{border-left:4px solid var(--accent);padding:12px 16px !important;font-size:14px;line-height:1.55}
+.imptxt{width:100%;font-family:var(--mono);font-size:13px;line-height:1.5;padding:10px 12px;border-radius:8px;border:1px solid var(--line-2);background:var(--bg);color:var(--ink);resize:vertical;box-sizing:border-box}
+.imptxt:focus{outline:none;border-color:var(--accent)}
+#impDef{font:inherit;font-size:14px;max-width:100%;padding:7px 8px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+#impPrev:not(:empty){padding:0 20px 8px}
+.imperr{font-size:13px;color:var(--bad);margin:8px 0}
+.imperr ul{margin:4px 0 0;padding-left:18px}
+.impprev{display:grid;gap:10px;margin:8px 0}
+.ipq{border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:14px}
+.ipq ol{margin:6px 0;padding-left:22px}
+.ipq li.ok{color:var(--good);font-weight:600}
+.minelist{margin:0;padding-left:22px}
+.minelist li{padding:10px 0;border-top:1px solid var(--line);font-size:14px}
+.minelist li:first-child{border-top:0}
+.minelist li>div{display:inline-block;width:calc(100% - 80px);vertical-align:top}
+.minelist li>.chip{float:right}
+
 /* ===================== DESIGN STYLES ===================== */
 /* ---------- Swiss: International Typographic Style ---------- */
 :root[data-skin="swiss"]{--bg:#ffffff;--surface:#ffffff;--surface-2:#f1f1f1;--line:#111;--line-2:#111;--ink:#111;--ink-2:#2a2a2a;--ink-3:#5c5c5c;--accent:#e30613;--accent-ink:#fff;--accent-soft:#fde8e9;--good:#0a7a3d;--good-soft:#e5f3eb;--bad:#e30613;--bad-soft:#fde8e9;--mark:#ffe14d;--display:"Inter Tight",Inter,Arial,sans-serif;--body:"Inter Tight",Inter,Arial,sans-serif;color-scheme:light}
